@@ -1,16 +1,27 @@
-// app/login/page.js
+// app/login/page.tsx
 "use client";
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
+
+interface LoginResponse {
+  token: string;
+  user: {
+    username: string;
+    status: string;
+    // tambahkan field lain jika perlu
+  };
+  error?: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ username: '', password: '' });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
-  // Cek token saat halaman dimuat (pengganti init() di Alpine)
   useEffect(() => {
     const token = localStorage.getItem('jwt_token');
     if (token) {
@@ -18,13 +29,16 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) throw new Error("API URL belum disetting");
+
+      const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',
@@ -33,7 +47,7 @@ export default function LoginPage() {
         body: JSON.stringify(form)
       });
 
-      const data = await res.json();
+      const data: LoginResponse = await res.json();
 
       if (res.ok) {
         localStorage.setItem('jwt_token', data.token);
@@ -60,9 +74,13 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-slate-950 text-slate-100">
       <div className="w-full max-w-sm p-8 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl">
         <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-xl overflow-hidden mx-auto mb-4 shadow-lg shadow-emerald-500/20">
-                {/* Pastikan gambar ada di public/images */}
-                <img src="/images/croplogobot.png" alt="Logo" className="w-full h-full object-cover" />
+            <div className="w-16 h-16 rounded-xl overflow-hidden mx-auto mb-4 shadow-lg shadow-emerald-500/20 relative">
+                <Image 
+                  src="/images/croplogobot.png" 
+                  alt="Logo" 
+                  fill
+                  className="object-cover"
+                />
             </div>
             <h1 className="font-bold text-xl text-white">
                 Dompet<span className="text-emerald-400">Pintar</span>Bot
