@@ -243,7 +243,7 @@ export default function ChartPage() {
                 align: 'end',
                 labels: {
                   color: '#cbd5e1',
-                  font: { family: 'Inter', size: 11, weight: '600' },
+                  font: { family: 'Inter', size: 11, weight: 600 },
                   padding: 12,
                   usePointStyle: true,
                   pointStyle: 'circle'
