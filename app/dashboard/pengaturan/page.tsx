@@ -18,34 +18,83 @@ export default function PengaturanAkunPage() {
     username: '',
     status: '',
   });
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
-    // 1. Cek token (Keamanan)
+    // 1. Cek token
     const token = localStorage.getItem('jwt_token');
     if (!token) {
         router.push('/login');
         return;
     }
 
-    // 2. Load User Data dari LocalStorage
+    // 2. Load LocalStorage (Biar UI cepat muncul dulu)
     const userStr = localStorage.getItem('user');
     if (userStr) {
         try {
             const userData = JSON.parse(userStr);
             setUser(userData);
-            // Debug: Cek data user di console browser
-            console.log("User Data Loaded:", userData);
         } catch (e) {
-            console.error("Gagal load user", e);
+            console.error("Gagal load user local", e);
         }
     }
+
+    // 3. AMBIL DATA TERBARU DARI SERVER (Live Sync)
+    fetchLatestProfile(token);
+
   }, [router]);
+
+  const fetchLatestProfile = async (token: string) => {
+    setIsChecking(true);
+    try {
+        // --- PERBAIKAN DISINI ---
+        // Tambahkan timestamp (?t=...) agar browser tidak pakai cache lama
+        // Tambahkan cache: 'no-store' agar Next.js selalu minta data baru
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/profile?t=${new Date().getTime()}`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'ngrok-skip-browser-warning': 'true' 
+            },
+            cache: 'no-store', // Paksa ambil fresh data
+            next: { revalidate: 0 } // Tambahan untuk Next.js App Router
+        });
+
+        if (res.ok) {
+            const json = await res.json();
+            // Ambil data user dari respon (bisa json.data, json.user, atau root json)
+            const freshUser = json.data || json.user || json; 
+
+            console.log("🔥 Data Segar dari Server:", freshUser); // Cek console browser untuk memastikan data masuk
+
+            // Update State UI
+            setUser(freshUser);
+
+            // Update LocalStorage agar halaman lain juga tahu
+            localStorage.setItem('user', JSON.stringify(freshUser));
+            if (freshUser.username) {
+                localStorage.setItem('username', freshUser.username);
+            }
+        }
+    } catch (e) {
+        console.error("Gagal cek profil terbaru:", e);
+    } finally {
+        setIsChecking(false);
+    }
+  };
 
   return (
     <div className="max-w-xl mx-auto space-y-6 pb-10">
       
       {/* --- HEADER USER INFO --- */}
-      <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+      <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
+          {/* Indikator Loading saat sync data */}
+          {isChecking && (
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-slate-800 overflow-hidden">
+                <div className="w-full h-full bg-emerald-500 animate-progress origin-left-right"></div>
+            </div>
+          )}
+
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg shrink-0">
               <span>{user.username ? user.username.charAt(0).toUpperCase() : 'U'}</span>
           </div>
@@ -111,7 +160,7 @@ export default function PengaturanAkunPage() {
               </h3>
               
               {user.telegram_id ? (
-                  <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full border border-blue-500/20 font-bold">
+                  <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full border border-blue-500/20 font-bold animate-pulse">
                       TERHUBUNG
                   </span>
               ) : (
@@ -123,9 +172,9 @@ export default function PengaturanAkunPage() {
 
           <div className="p-6 space-y-4">
               
-              {/* Jika Sudah Connect */}
               {user.telegram_id ? (
-                  <div className="space-y-4 animate-fade-in-up">
+                  /* KONDISI: SUDAH TERHUBUNG */
+                  <div className="space-y-4 animate-in fade-in zoom-in duration-300">
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center">
                           <p className="text-xs text-blue-300 uppercase font-bold mb-1">Telegram ID</p>
                           <p className="text-xl font-mono font-bold text-white tracking-wider">{user.telegram_id}</p>
@@ -144,8 +193,8 @@ export default function PengaturanAkunPage() {
                       </Link>
                   </div>
               ) : (
-                  /* Jika Belum Connect */
-                  <div className="text-center space-y-4 animate-fade-in-up">
+                  /* KONDISI: BELUM TERHUBUNG */
+                  <div className="text-center space-y-4 animate-in fade-in zoom-in duration-300">
                       <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-3xl opacity-50">
                           ✈️
                       </div>
