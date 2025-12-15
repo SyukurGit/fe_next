@@ -12,15 +12,13 @@ interface UserDetail {
     role: string;
     status: string;
     telegram_id?: number | null;
+    last_transaction_at?: string | null; // <-- Diperbaiki (sesuai backend)
   };
   stats: {
     income: number;
     expense: number;
     balance: number;
   };
-  last_transaction?: {
-    created_at: string;
-  } | null;
 }
 
 export default function AdminUserDetailPage() {
@@ -83,12 +81,11 @@ export default function AdminUserDetailPage() {
     if(form.username && form.username !== data?.user.username) payload.username = form.username;
     if(form.password) payload.password = form.password;
     
-    // Konversi Telegram ID: string kosong -> null, angka -> integer
+    // Logic Telegram ID
     if(form.telegram_id !== '') {
         payload.telegram_id = parseInt(form.telegram_id);
     } else {
-        // Jika dikosongkan, kirim null untuk unbind (opsional, tergantung backend)
-        // payload.telegram_id = null; 
+        // payload.telegram_id = null; // Unbind logic (opsional)
     }
 
     if(Object.keys(payload).length === 0) {
@@ -104,9 +101,8 @@ export default function AdminUserDetailPage() {
     const result = await res.json();
     if(res.ok) {
         setMessage('✅ Berhasil disimpan!');
-        // Reset password field saja, username & tele biarkan terisi
         setForm(prev => ({ ...prev, password: '' })); 
-        fetchDetails(); // Refresh data
+        fetchDetails(); 
     } else {
         setIsError(true);
         setMessage(`❌ ${result.error || 'Gagal update'}`);
@@ -116,8 +112,8 @@ export default function AdminUserDetailPage() {
   const formatRupiah = (num: number) => 
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr || dateStr.startsWith('0001')) return 'Belum pernah input';
     return new Date(dateStr).toLocaleString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
@@ -149,10 +145,30 @@ export default function AdminUserDetailPage() {
                     </span>
                 </div>
                 
-                <div className="space-y-1 text-sm text-slate-400">
+                <div className="space-y-2 text-sm text-slate-400 mt-4">
                     <p>Role: <span className="text-slate-200 font-semibold uppercase">{data.user.role}</span></p>
-                    <p>ID Telegram: <span className="font-mono text-emerald-400">{data.user.telegram_id || 'Belum Bind'}</span></p>
-                    <p>Terakhir Input: <span className="text-orange-400 font-semibold">{formatDate(data.last_transaction?.created_at)}</span></p>
+                    
+                    {/* --- BAGIAN STATUS TELEGRAM --- */}
+                    <div className="flex items-center gap-2">
+                        <span>Telegram:</span>
+                        {data.user.telegram_id ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-400 font-mono bg-emerald-400/10 px-2 py-0.5 rounded text-xs border border-emerald-400/20">
+                                ✅ Terhubung (ID: {data.user.telegram_id})
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1 text-slate-500 bg-slate-800 px-2 py-0.5 rounded text-xs italic">
+                                ❌ Belum Bind
+                            </span>
+                        )}
+                    </div>
+
+                    {/* --- BAGIAN TERAKHIR INPUT --- */}
+                    <p>
+                        Terakhir Input: 
+                        <span className="ml-2 text-orange-400 font-semibold">
+                            {formatDate(data.user.last_transaction_at)}
+                        </span>
+                    </p>
                 </div>
             </div>
             
@@ -178,7 +194,7 @@ export default function AdminUserDetailPage() {
             </div>
         </div>
 
-        {/* EDIT FORM */}
+        {/* EDIT FORM (Sama seperti sebelumnya) */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <h3 className="text-lg font-semibold mb-6 text-orange-400 border-b border-slate-800 pb-2">
                 Edit Data Akun

@@ -409,7 +409,7 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col items-center text-center space-y-6">
             
             {/* Support Box */}
-            <div className="border border-slate-800 rounded-2xl bg-slate-900/80 p-4 flex flex-col items-center gap-4 w-full max-w-md">
+            {/* <div className="border border-slate-800 rounded-2xl bg-slate-900/80 p-4 flex flex-col items-center gap-4 w-full max-w-md">
                 <div>
                     <p className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1">
                         Support Sanger Dingin ☕ Segelas
@@ -423,7 +423,7 @@ export default function DashboardPage() {
                         <Image src="/images/qris.jpeg" alt="QRIS" fill className="object-cover" />
                     </div>
                 </a>
-            </div>
+            </div> */}
 
             {/* Copyright */}
             <div className="w-full h-px bg-slate-900"></div>
