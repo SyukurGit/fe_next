@@ -56,7 +56,7 @@ export default function LoginPage() {
 
         // Logic redirect pintar
         if (data.user.status === 'suspended') {
-          router.push('/suspended');
+          router.push('dashboard/suspended');
         } else {
           router.push('/dashboard');
         }
