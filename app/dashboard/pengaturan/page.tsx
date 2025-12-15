@@ -5,79 +5,75 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-interface User {
+// Interface sesuai dengan respon API Backend yang baru
+interface UserProfile {
   username: string;
   status: string;
-  telegram_id?: number;
-  telegram_username?: string;
+  telegram_id?: number | null; // Bisa null atau number
 }
 
 export default function PengaturanAkunPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User>({
+  const [user, setUser] = useState<UserProfile>({
     username: '',
     status: '',
+    telegram_id: null,
   });
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
-    // 1. Cek token
-    const token = localStorage.getItem('jwt_token');
+    const token = localStorage.getItem('jwt_token'); // Pastikan key token konsisten ('token' atau 'jwt_token')
     if (!token) {
         router.push('/login');
         return;
     }
 
-    // 2. Load LocalStorage (Biar UI cepat muncul dulu)
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
+    // 1. Load data awal dari LocalStorage (jika ada) biar cepat
+    const localUserStr = localStorage.getItem('user');
+    if (localUserStr) {
         try {
-            const userData = JSON.parse(userStr);
-            setUser(userData);
+            const localUser = JSON.parse(localUserStr);
+            setUser(prev => ({ ...prev, ...localUser }));
         } catch (e) {
-            console.error("Gagal load user local", e);
+            console.error("Error parsing local user", e);
         }
     }
 
-    // 3. AMBIL DATA TERBARU DARI SERVER (Live Sync)
+    // 2. Ambil Data LIVE dari Server
     fetchLatestProfile(token);
-
   }, [router]);
 
   const fetchLatestProfile = async (token: string) => {
     setIsChecking(true);
     try {
-        // --- PERBAIKAN DISINI ---
-        // Tambahkan timestamp (?t=...) agar browser tidak pakai cache lama
-        // Tambahkan cache: 'no-store' agar Next.js selalu minta data baru
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/profile?t=${new Date().getTime()}`, {
-            method: 'GET',
+        // Panggil endpoint /user/settings (bukan /user/profile karena di user.go namanya GetUserSettings)
+        // Tambahkan timestamp agar tidak dicache browser
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/settings?t=${Date.now()}`, {
             headers: { 
-                'Authorization': `Bearer ${token}`, 
+                'Authorization': `Bearer ${token}`,
                 'ngrok-skip-browser-warning': 'true' 
             },
-            cache: 'no-store', // Paksa ambil fresh data
-            next: { revalidate: 0 } // Tambahan untuk Next.js App Router
+            cache: 'no-store'
         });
 
         if (res.ok) {
-            const json = await res.json();
-            // Ambil data user dari respon (bisa json.data, json.user, atau root json)
-            const freshUser = json.data || json.user || json; 
+            const data = await res.json();
+            
+            // Log untuk debugging: Pastikan telegram_id ada di sini!
+            console.log("🔥 Data Profile Server:", data);
 
-            console.log("🔥 Data Segar dari Server:", freshUser); // Cek console browser untuk memastikan data masuk
+            // Update State
+            setUser(data);
 
-            // Update State UI
-            setUser(freshUser);
-
-            // Update LocalStorage agar halaman lain juga tahu
-            localStorage.setItem('user', JSON.stringify(freshUser));
-            if (freshUser.username) {
-                localStorage.setItem('username', freshUser.username);
+            // Update LocalStorage agar sinkron
+            const localUserStr = localStorage.getItem('user');
+            if (localUserStr) {
+                const updatedLocal = { ...JSON.parse(localUserStr), ...data };
+                localStorage.setItem('user', JSON.stringify(updatedLocal));
             }
         }
-    } catch (e) {
-        console.error("Gagal cek profil terbaru:", e);
+    } catch (error) {
+        console.error("Gagal ambil profile:", error);
     } finally {
         setIsChecking(false);
     }
@@ -88,7 +84,7 @@ export default function PengaturanAkunPage() {
       
       {/* --- HEADER USER INFO --- */}
       <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
-          {/* Indikator Loading saat sync data */}
+          {/* Loading Bar Animation */}
           {isChecking && (
             <div className="absolute top-0 left-0 w-full h-0.5 bg-slate-800 overflow-hidden">
                 <div className="w-full h-full bg-emerald-500 animate-progress origin-left-right"></div>
@@ -107,7 +103,7 @@ export default function PengaturanAkunPage() {
                     'bg-red-500/10 text-red-400 border-red-500/20'
                 }`}
               >
-                  {user.status || '...'}
+                  {user.status || 'Checking...'}
               </span>
           </div>
       </div>
@@ -159,7 +155,8 @@ export default function PengaturanAkunPage() {
                   <span>🔗</span> Integrasi Telegram
               </h3>
               
-              {user.telegram_id ? (
+              {/* INDIKATOR STATUS */}
+              {user.telegram_id && user.telegram_id !== 0 ? (
                   <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full border border-blue-500/20 font-bold animate-pulse">
                       TERHUBUNG
                   </span>
@@ -172,24 +169,18 @@ export default function PengaturanAkunPage() {
 
           <div className="p-6 space-y-4">
               
-              {user.telegram_id ? (
-                  /* KONDISI: SUDAH TERHUBUNG */
+              {/* KONDISI: SUDAH TERHUBUNG */}
+              {user.telegram_id && user.telegram_id !== 0 ? (
                   <div className="space-y-4 animate-in fade-in zoom-in duration-300">
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center">
-                          <p className="text-xs text-blue-300 uppercase font-bold mb-1">Telegram ID</p>
+                          <p className="text-xs text-blue-300 uppercase font-bold mb-1">Telegram ID Anda</p>
                           <p className="text-xl font-mono font-bold text-white tracking-wider">{user.telegram_id}</p>
-                          
-                          {user.telegram_username && (
-                              <div className="mt-2 pt-2 border-t border-blue-500/20">
-                                  <p className="text-[10px] text-blue-300">Username: <span className="text-white font-bold">@{user.telegram_username}</span></p>
-                              </div>
-                          )}
                       </div>
                       <p className="text-xs text-slate-500 text-center">
                           Akun Anda sudah terhubung. Anda bisa input transaksi lewat bot.
                       </p>
-                      <Link href="/dashboard/pengaturan/telegram" className="block w-full text-center text-sm text-slate-400 hover:text-white py-2 transition">
-                          Ganti Akun Telegram?
+                      <Link href="/dashboard/pengaturan/telegram" className="block w-full text-center text-sm text-slate-400 hover:text-white py-2 transition underline decoration-slate-700 underline-offset-4">
+                          Ingin Ganti Akun Telegram?
                       </Link>
                   </div>
               ) : (

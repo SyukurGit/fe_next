@@ -322,7 +322,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
                 <svg className="w-16 h-16 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             </div>
-            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Saldo Bersih</p>
+            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Selisih Saldo (Cashflow)</p>
             <h3 className="text-3xl font-bold text-white mt-2 group-hover:text-sky-400 transition">{formatRupiah(summary.saldo)}</h3>
             <div className="mt-4 flex items-center gap-2 text-sky-500 text-xs font-medium bg-sky-500/10 w-fit px-2 py-1 rounded-full">
                 <span>↔ Mutasi Rekening</span>
