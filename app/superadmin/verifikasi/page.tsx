@@ -63,25 +63,51 @@ export default function VerificationPage() {
     setModalOpen(true);
   };
 
-  const approveUser = async (userId: number, username: string) => {
+  // --- LOGIC BARU UNTUK TERIMA & TOLAK ---
+
+  const approveUser = async (paymentId: number, userId: number, username: string) => {
     if(!confirm(`Aktifkan user ${username}?`)) return;
-    await fetchWithAuth(`/api/admin/users/${userId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'active' })
-    });
-    alert("User Aktif!");
-    fetchPayments();
+
+    try {
+        // 1. Set User jadi Active
+        await fetchWithAuth(`/api/admin/users/${userId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'active' })
+        });
+
+        // 2. Hapus Log Pembayaran & Gambar (sesuai API deleteOne)
+        await fetchWithAuth(`/api/admin/payments/${paymentId}`, { method: 'DELETE' });
+
+        alert(`Username ${username} berhasil di aktifkan`);
+        fetchPayments();
+    } catch (error) {
+        console.error("Gagal approve user:", error);
+        alert("Terjadi kesalahan sistem saat mengaktifkan user.");
+    }
   };
 
-  const rejectUser = async (userId: number, username: string) => {
-    if(!confirm(`Tolak verifikasi ${username}?`)) return;
-    await fetchWithAuth(`/api/admin/users/${userId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'suspended' })
-    });
-    alert("User Ditolak.");
-    fetchPayments();
+  const rejectUser = async (paymentId: number, userId: number, username: string) => {
+    if(!confirm("Apa benar anda tolak bukti ini?")) return;
+
+    try {
+        // 1. Set User jadi Suspended (memastikan tetap suspend)
+        await fetchWithAuth(`/api/admin/users/${userId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'suspended' })
+        });
+
+        // 2. Hapus Log Pembayaran & Gambar
+        await fetchWithAuth(`/api/admin/payments/${paymentId}`, { method: 'DELETE' });
+
+        alert(`Username ${username} tetap dalam suspend`);
+        fetchPayments();
+    } catch (error) {
+        console.error("Gagal reject user:", error);
+        alert("Terjadi kesalahan sistem saat menolak user.");
+    }
   };
+
+  // ----------------------------------------
 
   const deleteOne = async (id: number) => {
     if(!confirm("Hapus log ini?")) return;
@@ -327,7 +353,7 @@ export default function VerificationPage() {
                 {activeTab === 'manual' ? (
                   <div className="p-4 grid grid-cols-2 gap-3">
                     <button 
-                      onClick={() => approveUser(pay.user_id, pay.username)} 
+                      onClick={() => approveUser(pay.id, pay.user_id, pay.username)} 
                       className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white py-3 rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 hover:scale-105 flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +362,7 @@ export default function VerificationPage() {
                       TERIMA
                     </button>
                     <button 
-                      onClick={() => rejectUser(pay.user_id, pay.username)} 
+                      onClick={() => rejectUser(pay.id, pay.user_id, pay.username)} 
                       className="bg-slate-800 hover:bg-gradient-to-r hover:from-red-600 hover:to-red-500 text-slate-300 hover:text-white py-3 rounded-xl text-xs font-bold transition-all border border-slate-700 hover:border-red-500 hover:shadow-lg hover:shadow-red-900/30 hover:scale-105 flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -60,12 +60,12 @@ export default function LandingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -z-10"></div>
 
         <div className="mb-6 relative group cursor-pointer">
-            <div className="w-24 h-24 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-500/10 border border-slate-700 group-hover:scale-105 transition duration-500 overflow-hidden relative">
+            <div className="w-24 h-24 bg-gradient-100 from-slate-800 to-slate-900 rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-500/10 border border-slate-700 group-hover:scale-105 transition duration-500 overflow-hidden relative">
                 <Image 
                   src="/images/logobot.png" 
                   alt="Logo" 
                   fill
-                  className="object-contain p-2"
+                  className="object-cover"
                 />
             </div>
 
