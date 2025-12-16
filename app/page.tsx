@@ -37,12 +37,21 @@ export default function LandingPage() {
             <div className="flex items-center gap-2 font-bold text-lg">
                 <span>Dompet<span className="text-emerald-400">Pintar</span><span>Bot</span></span>
             </div>
-            <Link 
-              href="/login" 
-              className="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-full text-sm font-medium transition border border-slate-700"
-            >
-                Login User &rarr;
-            </Link>
+            <div className="flex gap-3">
+                {/* Menambahkan tombol Register di Navbar agar lebih mudah diakses */}
+                <Link 
+                  href="/register" 
+                  className="hidden md:block text-slate-300 hover:text-white px-4 py-2 text-sm font-medium transition"
+                >
+                    Daftar Akun
+                </Link>
+                <Link 
+                  href="/login" 
+                  className="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-full text-sm font-medium transition border border-slate-700"
+                >
+                    Login User &rarr;
+                </Link>
+            </div>
         </div>
       </nav>
 
@@ -99,68 +108,60 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* FEATURE SECTION */}
+      {/* FEATURE SECTION - UPDATED */}
       <section className="max-w-5xl mx-auto px-6 py-16">
         <div className="text-center mb-12 scroll-reveal opacity-0 translate-y-8 transition-all duration-700 ease-out">
             <h2 className="text-2xl font-bold text-white">Cara Daftar dan Pakai</h2>
-            <p className="text-sm text-slate-500 mt-2">langkah untuk mulai daftar dan pakai.</p>
+            <p className="text-sm text-slate-500 mt-2">3 Langkah mudah untuk mulai mengelola keuangan.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* Step 1 */}
+            {/* Step 1: Daftar Mandiri */}
             <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl hover:border-emerald-500/30 transition group scroll-reveal opacity-0 translate-y-8 duration-700 ease-out delay-100">
                 <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:bg-emerald-500/20 group-hover:text-emerald-400 transition">
                     1️⃣
                 </div>
-                <h3 className="font-bold text-white mb-2">Daftar Akun</h3>
-                <p className="text-sm text-slate-400">
-                    Lakukan <span className="text-white font-semibold">ping chat bebas</span> ke bot 
-                    <a href="https://t.me/DompetPintar_A76Labs_Bot" target="_blank" className="text-emerald-400 font-mono hover:underline ml-1">
-                        @DompetPintar_A76Labs_Bot
-                    </a>
-                    di Telegram untuk mendapatkan instruksi cara daftar lengkap.
+                <h3 className="font-bold text-white mb-2">Registrasi Akun</h3>
+                <p className="text-sm text-slate-400 mb-4">
+                    Tidak perlu menunggu admin. Buat akun Anda sendiri langsung melalui website untuk mendapatkan akses dashboard seketika.
                 </p>
-                <p className="text-sm text-slate-400 mt-2">
-                    Setelah terdaftar, Anda akan mendapatkan Username dan Sandi dari
-                    <a href="https://t.me/unxpctedd" target="_blank" className="text-emerald-400 font-mono hover:underline ml-1">
-                        @unxpctedd
-                    </a>
-                    yang nantinya anda bisa gunakan bot dan login di web.
-                </p>
+                <Link href="/register" className="text-emerald-400 font-bold text-sm hover:underline flex items-center gap-1">
+                    Daftar di sini &rarr;
+                </Link>
             </div>
 
-            {/* Step 2 */}
+            {/* Step 2: Login & Monitoring */}
             <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl hover:border-purple-500/30 transition group scroll-reveal opacity-0 translate-y-8 duration-700 ease-out delay-200">
                 <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:bg-purple-500/20 group-hover:text-purple-400 transition">
                     2️⃣
                 </div>
-                <h3 className="font-bold text-white mb-2">Pantau Dashboard</h3>
+                <h3 className="font-bold text-white mb-2">Login Dashboard</h3>
                 <p className="text-sm text-slate-400 mb-4 leading-relaxed">
-                    Login ke dashboard untuk melihat grafik cashflow, analisa harian, sisa budget, dan download laporan Excel secara real-time.
+                    Gunakan akun yang telah didaftarkan untuk login. Pantau grafik keuangan, sisa budget, dan laporan cashflow secara real-time.
                 </p>
                 <Link href="/login" className="inline-flex items-center gap-2 text-sm font-bold text-white hover:text-emerald-300 transition bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
                     Login Sekarang &rarr;
                 </Link>
             </div>
 
-            {/* Step 3 */}
+            {/* Step 3: Integrasi Bot */}
             <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl hover:border-blue-500/30 transition group scroll-reveal opacity-0 translate-y-8 duration-700 ease-out delay-300">
                 <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:bg-blue-500/20 group-hover:text-blue-400 transition">
                     3️⃣
                 </div>
-                <h3 className="font-bold text-white mb-2">Input Multi-Platform</h3>
+                <h3 className="font-bold text-white mb-2">Hubungkan Bot</h3>
                 <p className="text-sm text-slate-400 mb-3">
-                    Catat transaksi dari mana saja sesuka hatimu. Data akan langsung tersinkronisasi.
+                    Ingin input tanpa buka web? Hubungkan akun Telegram Anda untuk input transaksi super cepat.
                 </p>
                 <ul className="space-y-2">
                     <li className="text-xs text-slate-300 flex items-start gap-2">
-                        <span className="text-blue-400">🌐</span> 
-                        <span><b>Via Web:</b> Gunakan menu &quot;Input&quot; untuk form lengkap & edit data.</span>
+                        <span className="text-blue-400">⚡</span> 
+                        <span>Cukup chat bot: <code className="bg-slate-950 px-1 rounded border border-slate-700 text-[10px] text-emerald-400">/start</code></span>
                     </li>
                     <li className="text-xs text-slate-300 flex items-start gap-2">
-                        <span className="text-blue-400">💬</span> 
-                        <span><b>Via Telegram:</b> Chat kilat <code className="bg-slate-950 px-1 rounded border border-slate-700 text-[10px]">+20rb Gaji</code> atau <code className="bg-slate-950 px-1 rounded border border-slate-700 text-[10px]">-20rb Makan</code> saat sedang di jalan.</span>
+                        <span className="text-blue-400">📝</span> 
+                        <span>Ketik <code className="bg-slate-950 px-1 rounded border border-slate-700 text-[10px]">-20rb Makan</code>, data langsung masuk ke web!</span>
                     </li>
                 </ul>
             </div>
