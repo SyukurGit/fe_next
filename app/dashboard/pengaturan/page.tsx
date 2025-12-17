@@ -81,6 +81,23 @@ export default function PengaturanAkunPage() {
 
   return (
     <div className="max-w-xl mx-auto space-y-6 pb-10">
+
+        {/* --- NAVIGASI KEMBALI --- */}
+      <div className="flex items-center gap-4 mb-2">
+        <button 
+            onClick={() => router.back()} 
+            className="group flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition"
+            title="Kembali"
+        >
+            <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        <div>
+            <h1 className="text-xl font-bold text-white">Pengaturan Akun</h1>
+            <p className="text-xs text-slate-500">Kelola profil dan preferensi aplikasi</p>
+        </div>
+      </div>
       
       {/* --- HEADER USER INFO --- */}
       <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 relative overflow-hidden">

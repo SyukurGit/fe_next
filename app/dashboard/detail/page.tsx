@@ -1,9 +1,8 @@
 // app/dashboard/detail/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 
 // --- Tipe Data ---
 interface Transaction {
@@ -16,314 +15,352 @@ interface Transaction {
 }
 
 export default function DetailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500">Loading...</div>}>
+      <DetailContent />
+    </Suspense>
+  );
+}
+
+function DetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Ambil mode dari URL (?mode=income|expense|all)
+  // Mode: 'income', 'expense', atau 'all'
   const viewMode = searchParams.get('mode') || 'all';
-  const dateParam = searchParams.get('date');
+  const dateParam = searchParams.get('date'); // YYYY-MM-DD
 
-  // State
+  const parseDateParam = (str: string) => {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
+  // State Utama
   const [allData, setAllData] = useState<Transaction[]>([]);
-  const [currentDateContext, setCurrentDateContext] = useState<Date>(new Date());
-  const [activeDateKey, setActiveDateKey] = useState<string>(''); // YYYY-MM-DD
+  const [currentDate, setCurrentDate] = useState<Date>(() => {
+    return dateParam ? parseDateParam(dateParam) : new Date();
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  // Ref untuk scroll otomatis tanggal
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // --- Initial Load ---
+  // Sinkronisasi kalau datang dari halaman laporan
   useEffect(() => {
-    const token = localStorage.getItem('jwt_token');
-    if (!token) {
-        router.push('/login');
-        return;
-    }
-
-    // Jika ada param tanggal (dari Laporan), set context ke sana
     if (dateParam) {
-        const target = new Date(dateParam);
-        if (!isNaN(target.getTime())) {
-            setCurrentDateContext(target);
-            setActiveDateKey(dateParam);
-        }
+      setCurrentDate(parseDateParam(dateParam));
     }
+  }, [dateParam]);
 
-    fetchData();
-  }, [viewMode]);
+  // --- 1. Fetch Data Sekali Saja (Optimasi) ---
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+           router.push('/login');
+           return;
+        }
 
-  // --- Fetch API ---
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('jwt_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      
-      let endpoint = `/api/transactions`;
-      if (viewMode !== 'all') endpoint += `?type=${viewMode}`;
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        // Kita fetch semua data tipe terkait, nanti difilter di client agar navigasi tanggal cepat
+        let endpoint = `/api/transactions`;
+        if (viewMode !== 'all') endpoint += `?type=${viewMode}`;
 
-      const res = await fetch(`${apiUrl}${endpoint}`, {
-        headers: { 
+        const res = await fetch(`${apiUrl}${endpoint}`, {
+          headers: { 
             'Authorization': `Bearer ${token}`, 
             'ngrok-skip-browser-warning': 'true' 
+          }
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          setAllData(json.data || []);
         }
-      });
-
-      if (res.status === 401) {
-        router.push('/login');
-        return;
+      } catch (e) {
+        console.error("Gagal load data", e);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      const json = await res.json();
-      
-      if (json.data) {
-        // Sort dari terbaru ke terlama
-        const sorted = json.data.sort((a: Transaction, b: Transaction) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        setAllData(sorted);
+    fetchData();
+  }, [viewMode, router]);
 
-        // Jika belum ada tanggal aktif, set ke tanggal terbaru yg ada datanya
-        if (!activeDateKey && sorted.length > 0) {
-            // Cari data di bulan ini dulu
-            const thisMonthData = sorted.filter((t: Transaction) => {
-                const d = new Date(t.created_at);
-                return d.getMonth() === currentDateContext.getMonth();
-            });
-            
-            if (thisMonthData.length > 0) {
-                setActiveDateKey(thisMonthData[0].created_at.split('T')[0]);
-            }
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
+  // --- 2. Helper Timezone Fix (Anti Nimbrung) ---
+  // Mengubah ISO String dari API menjadi YYYY-MM-DD Lokal Browser
+  const getLocalDateKey = (isoString: string) => {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
-  // --- Computed Data (Menggunakan useMemo agar performa bagus) ---
-  
-  // 1. List Tanggal Unik di Bulan Terpilih (Sorted Ascending: 1, 2, 3...)
-  const availableDatesInMonth = useMemo(() => {
-    const targetMonth = currentDateContext.getMonth();
-    const targetYear = currentDateContext.getFullYear();
-    
-    const dates = new Set<string>();
-    allData.forEach(item => {
-        const d = new Date(item.created_at);
-        if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
-            dates.add(item.created_at.substring(0, 10)); // Ambil YYYY-MM-DD
-        }
-    });
-    
-    // Sort Ascending (Kecil ke Besar) agar navigasi Next/Prev logis
-    return Array.from(dates).sort();
-  }, [allData, currentDateContext]);
+  // --- 3. Logika Kalender Dinamis ---
+  const daysInMonth = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const days = new Date(year, month + 1, 0).getDate(); // Jumlah hari dalam bulan tsb
+    return Array.from({ length: days }, (_, i) => i + 1);
+  }, [currentDate]);
 
-  // 2. Transaksi di Tanggal Aktif
-  const activeTransactions = useMemo(() => {
-    if (!activeDateKey) return [];
-    return allData.filter(item => item.created_at.startsWith(activeDateKey));
+  const activeDateKey = getLocalDateKey(currentDate.toISOString()); // YYYY-MM-DD hari yang dipilih
+
+  // Filter Data Berdasarkan Tanggal yang Dipilih
+  const dailyTransactions = useMemo(() => {
+    return allData.filter(t => getLocalDateKey(t.created_at) === activeDateKey).sort((a, b) => 
+       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   }, [allData, activeDateKey]);
 
-  // 3. Total Harian
+  // Hitung Total Harian
   const dailyTotal = useMemo(() => {
-    return activeTransactions.reduce((acc, curr) => {
-        if (viewMode === 'all') {
-            return acc + (curr.type === 'income' ? curr.amount : -curr.amount);
-        }
-        return acc + curr.amount;
+    return dailyTransactions.reduce((acc, curr) => {
+      if (viewMode === 'all') {
+        return acc + (curr.type === 'income' ? curr.amount : -curr.amount);
+      }
+      return acc + curr.amount;
     }, 0);
-  }, [activeTransactions, viewMode]);
+  }, [dailyTransactions, viewMode]);
 
-  // 4. Total Bulanan
-  const monthlyTotal = useMemo(() => {
-    const targetMonth = currentDateContext.getMonth();
-    const targetYear = currentDateContext.getFullYear();
-    
-    return allData.reduce((acc, curr) => {
-        const d = new Date(curr.created_at);
-        if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
-            if (viewMode === 'all') {
-                return acc + (curr.type === 'income' ? curr.amount : -curr.amount);
-            }
-            return acc + curr.amount;
-        }
-        return acc;
-    }, 0);
-  }, [allData, currentDateContext, viewMode]);
 
-  // --- Navigasi Logic ---
-
+  // --- 4. Navigasi & Scroll ---
   const changeMonth = (delta: number) => {
-    const newDate = new Date(currentDateContext);
+    const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + delta);
-    setCurrentDateContext(newDate);
-    
-    // Reset tanggal aktif jika bulan berubah
-    setActiveDateKey('');
+    newDate.setDate(1); // Reset ke tanggal 1 setiap ganti bulan
+    setCurrentDate(newDate);
   };
 
-  const navigateDate = (direction: number) => {
-    // direction: -1 (Mundur), 1 (Maju)
-    const currentIndex = availableDatesInMonth.indexOf(activeDateKey);
-    if (currentIndex === -1 && availableDatesInMonth.length > 0) {
-        // Jika belum pilih, pilih yg pertama
-        setActiveDateKey(availableDatesInMonth[0]);
-        return;
-    }
-
-    const newIndex = currentIndex + direction;
-    if (newIndex >= 0 && newIndex < availableDatesInMonth.length) {
-        setActiveDateKey(availableDatesInMonth[newIndex]);
-    }
+  const selectDay = (day: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(day);
+    setCurrentDate(newDate);
   };
 
-  const resetToToday = () => {
-    const today = new Date();
-    setCurrentDateContext(today);
-    const todayStr = today.toISOString().split('T')[0];
-    
-    // Cek ada data hari ini gak
-    const hasToday = allData.some(d => d.created_at.startsWith(todayStr));
-    if (hasToday) {
-        setActiveDateKey(todayStr);
-    } else {
-        // Kalau gak ada, refresh data (siapa tau baru input)
-        fetchData();
-    }
+  const jumpToToday = () => {
+    setCurrentDate(new Date());
   };
 
-  // --- Formatters ---
-  const formatMonthYear = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  // Auto Scroll ke Tanggal Aktif
+  useEffect(() => {
+    if (scrollRef.current) {
+      const activeBtn = document.getElementById(`day-btn-${currentDate.getDate()}`);
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }, [currentDate]);
+
+  // --- 5. Formatting & Style ---
   const formatRupiah = (num: number) => {
     const absNum = Math.abs(num);
     const str = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(absNum);
     return num < 0 ? `- ${str}` : str;
   };
-  const formatDateShort = (dateStr: string) => {
-    if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
-  };
-  const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  const getCategoryIcon = (cat: string) => cat ? cat.charAt(0).toUpperCase() : '?';
 
-  const getViewTitle = () => {
-    if (viewMode === 'income') return 'Rincian Pemasukan';
-    if (viewMode === 'expense') return 'Rincian Pengeluaran';
-    return 'Mutasi Rekening';
+  const getThemeColor = () => {
+    if (viewMode === 'income') return 'emerald';
+    if (viewMode === 'expense') return 'rose';
+    return 'blue';
   };
+  const theme = getThemeColor();
 
-  const isFirstDate = availableDatesInMonth.indexOf(activeDateKey) <= 0;
-  const isLastDate = availableDatesInMonth.indexOf(activeDateKey) >= availableDatesInMonth.length - 1;
+  const deleteTransaction = async (id: number) => {
+    if(!confirm("Yakin hapus data ini?")) return;
+    try {
+        const token = localStorage.getItem('jwt_token');
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transactions/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+        });
+        // Hapus dari state lokal biar responsif (tanpa fetch ulang)
+        setAllData(prev => prev.filter(item => item.id !== id));
+    } catch (e) {
+        alert("Gagal menghapus");
+    }
+  };
 
   return (
-    <div className="max-w-xl mx-auto space-y-6 pb-10">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
+      
+      {/* --- HEADER STICKY --- */}
+      <div className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 shadow-sm">
         
-        {/* HEADER MINI (Dalam Konten) */}
-        <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold text-white capitalize">{getViewTitle()}</h1>
-            <button onClick={resetToToday} className="text-xs font-medium text-emerald-500 hover:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+        {/* Top Bar: Back & Title */}
+        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+            <button 
+                onClick={() => router.back()} 
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition group"
+            >
+                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-slate-700">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                </div>
+            </button>
+
+            <div className="flex flex-col items-center">
+                <h1 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+                    {viewMode === 'all' ? 'Mutasi' : viewMode}
+                </h1>
+                <p className="text-xs text-slate-600">
+                    {currentDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}
+                </p>
+            </div>
+
+            <button 
+                onClick={jumpToToday}
+                className={`text-[10px] font-bold px-3 py-1.5 rounded-full border bg-slate-900 border-slate-700 hover:bg-${theme}-500/10 hover:border-${theme}-500 hover:text-${theme}-400 transition`}
+            >
                 Hari Ini
             </button>
         </div>
 
-        {/* MONTH NAVIGATOR & TOTAL */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
-            <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-            </button>
-            
-            <div className="text-center">
-                <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Periode</p>
-                <p className="text-lg font-bold text-white">{formatMonthYear(currentDateContext)}</p>
-                <p className={`text-xs ${viewMode === 'income' ? 'text-emerald-400' : (viewMode === 'expense' ? 'text-rose-400' : 'text-sky-400')}`}>
-                    Total: <span className="font-mono">{formatRupiah(monthlyTotal)}</span>
-                </p>
+        {/* Month Navigator */}
+        <div className="max-w-3xl mx-auto py-2 border-t border-slate-800/50">
+            <div className="flex items-center justify-center gap-6 mb-3">
+                <button onClick={() => changeMonth(-1)} className="p-1 text-slate-500 hover:text-white hover:bg-slate-800 rounded-full transition">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <span className="text-lg font-bold text-white min-w-[140px] text-center">
+                    {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                </span>
+                <button onClick={() => changeMonth(1)} className="p-1 text-slate-500 hover:text-white hover:bg-slate-800 rounded-full transition">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
             </div>
 
-            <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-            </button>
+            {/* Horizontal Day Scroll (1-31) */}
+            <div 
+                ref={scrollRef}
+                className="flex overflow-x-auto gap-2 px-4 pb-2 no-scrollbar mask-gradient select-none"
+            >
+                {daysInMonth.map((day) => {
+                    const isSelected = day === currentDate.getDate();
+                    
+                    // Style Dinamis
+                    const activeClass = `bg-${theme}-600 text-white shadow-lg shadow-${theme}-900/50 scale-105 border-${theme}-500`;
+                    const inactiveClass = `bg-slate-900 border-slate-800 text-slate-400 hover:border-${theme}-500/50 hover:text-white`;
+
+                    return (
+                        <button
+                            key={day}
+                            id={`day-btn-${day}`}
+                            onClick={() => selectDay(day)}
+                            className={`
+                                flex-shrink-0 w-12 h-16 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all duration-200
+                                ${isSelected ? activeClass : inactiveClass}
+                            `}
+                        >
+                            <span className="text-[9px] uppercase font-bold opacity-60">
+                                {new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toLocaleDateString('id-ID', { weekday: 'short' }).replace('.', '')}
+                            </span>
+                            <span className="text-xl font-bold leading-none">{day}</span>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+      </div>
+
+      {/* --- KONTEN LIST --- */}
+      <div className="max-w-3xl mx-auto px-4 mt-6 space-y-4">
+        
+        {/* Total Harian Info */}
+        <div className="flex items-center justify-between px-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                Ringkasan Tanggal {currentDate.getDate()}
+            </span>
+            <div className={`text-sm font-bold font-mono ${dailyTotal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+               {viewMode === 'all' ? 'Net: ' : 'Total: '} {formatRupiah(dailyTotal)}
+            </div>
         </div>
 
-        {/* DAY NAVIGATOR */}
-        {!isLoading && availableDatesInMonth.length > 0 && (
-            <div className="flex items-center justify-between gap-4">
-                <button 
-                    onClick={() => navigateDate(-1)} 
-                    disabled={isFirstDate}
-                    className="flex-1 py-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition group"
-                >
-                    <svg className="w-4 h-4 text-slate-400 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-                    <span className="text-xs font-medium text-slate-300">Tgl Sblmnya</span>
-                </button>
-
-                <div className="flex flex-col items-center min-w-[120px]">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Sedang Dilihat</span>
-                    <span className="text-sm font-bold text-white whitespace-nowrap">{formatDateShort(activeDateKey)}</span>
-                </div>
-
-                <button 
-                    onClick={() => navigateDate(1)} 
-                    disabled={isLastDate}
-                    className="flex-1 py-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition group"
-                >
-                    <span className="text-xs font-medium text-slate-300">Tgl Berikut</span>
-                    <svg className="w-4 h-4 text-slate-400 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                </button>
+        {/* Loading State */}
+        {isLoading && (
+            <div className="py-20 text-center text-slate-500 animate-pulse">
+                <div className={`w-8 h-8 border-2 border-${theme}-500 border-t-transparent rounded-full animate-spin mx-auto mb-2`}></div>
+                Memuat data...
             </div>
         )}
 
-        {/* CONTENT LIST */}
-        <div className="min-h-[300px]">
-            {isLoading && (
-                <div className="py-10 text-center animate-pulse">
-                    <p className="text-slate-500 text-sm">Memuat data...</p>
-                </div>
-            )}
+        {/* Empty State (Sesuai Request: Kosongkan jika tidak ada input) */}
+        {!isLoading && dailyTransactions.length === 0 && (
+            <div className="py-12 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800 text-center">
+                <p className="text-3xl mb-2 opacity-50">📝</p>
+                <p className="text-slate-400 text-sm font-medium">Belum ada catatan</p>
+                <p className="text-slate-600 text-xs mt-1">Tidak ada transaksi pada tanggal ini.</p>
+            </div>
+        )}
 
-            {!isLoading && availableDatesInMonth.length === 0 && (
-                <div className="py-12 text-center bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
-                    <p className="text-4xl mb-2">💤</p>
-                    <p className="text-slate-400 text-sm">Tidak ada transaksi di bulan ini.</p>
-                </div>
-            )}
+        {/* Transaction List */}
+        <div className="space-y-3">
+            {!isLoading && dailyTransactions.map((trx) => (
+                <div 
+                    key={trx.id} 
+                    className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between hover:border-slate-700 transition group relative overflow-hidden"
+                >
+                    {/* Decor Line */}
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${trx.type === 'income' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
 
-            {!isLoading && activeTransactions.length > 0 && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    
-                    <div className="flex items-center justify-between px-2">
-                        <span className="text-xs text-slate-400">Total Hari Ini</span>
-                        <span className={`text-lg font-bold ${viewMode === 'income' ? 'text-emerald-400' : (viewMode === 'expense' ? 'text-rose-400' : 'text-sky-400')}`}>
-                            {formatRupiah(dailyTotal)}
-                        </span>
-                    </div>
+                    <div className="flex items-center gap-4 pl-2 overflow-hidden">
+                        {/* Icon */}
+                        <div className={`
+                            w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shrink-0
+                            ${trx.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}
+                        `}>
+                            {trx.category.charAt(0).toUpperCase()}
+                        </div>
 
-                    <div className="space-y-3">
-                        {activeTransactions.map((item) => (
-                            <div key={item.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between hover:bg-slate-800/80 transition shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-slate-950 border border-slate-800 shrink-0 text-white font-bold">
-                                        {getCategoryIcon(item.category)}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-white truncate">{item.category}</p>
-                                        <p className="text-xs text-slate-400 truncate w-32 sm:w-48">{item.note || 'Tanpa catatan'}</p>
-                                    </div>
-                                </div>
-                                <div className="text-right shrink-0">
-                                    <p className={`text-sm font-semibold whitespace-nowrap ${item.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                        {viewMode === 'all' ? (item.type === 'expense' ? '- ' : '+ ') : ''}
-                                        {formatRupiah(item.amount)}
-                                    </p>
-                                    <p className="text-[10px] text-slate-500">{formatTime(item.created_at)}</p>
-                                </div>
+                        {/* Details */}
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-white text-sm truncate">{trx.category}</h3>
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                                <span className="bg-slate-950 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border border-slate-800">
+                                    {trx.type === 'income' ? 'Masuk' : 'Keluar'}
+                                </span>
+                                {trx.note && <span className="truncate max-w-[150px] border-l border-slate-700 pl-2">{trx.note}</span>}
                             </div>
-                        ))}
+                        </div>
+                    </div>
+
+                    {/* Amount & Action */}
+                    <div className="text-right shrink-0 z-10">
+                        <p className={`font-mono font-bold text-sm ${trx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {trx.type === 'income' ? '+' : '-'}{formatRupiah(trx.amount)}
+                        </p>
+                        <p className="text-[10px] text-slate-600 mb-1">
+                            {new Date(trx.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}
+                        </p>
+                        <button 
+                            onClick={() => deleteTransaction(trx.id)}
+                            className="text-[10px] text-red-500/40 hover:text-red-500 transition font-medium"
+                        >
+                            Hapus
+                        </button>
                     </div>
                 </div>
-            )}
+            ))}
         </div>
+
+      </div>
+
+      {/* Hide Scrollbar Style */}
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .mask-gradient {
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+      `}</style>
 
     </div>
   );

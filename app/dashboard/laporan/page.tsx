@@ -1,6 +1,6 @@
 // app/dashboard/laporan/page.tsx
 "use client";
-
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -132,11 +132,9 @@ export default function LaporanPage() {
     const targetYear = selectedDate.getFullYear();
 
     // 1. Filter transaksi sesuai bulan yang dipilih
+    // Menggunakan helper getLocalDateKey agar konsisten dengan halaman Detail
     const filtered = allTransactions.filter(t => {
-        // Fix tanggal format spasi "2023-10-10 10:00:00" -> "2023-10-10T10:00:00"
-        const dateStr = t.created_at ? t.created_at.replace(" ", "T") : "";
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return false;
+        const d = new Date(t.created_at);
         return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
     });
 
@@ -146,8 +144,12 @@ export default function LaporanPage() {
 
     // 2. Loop & Summing
     filtered.forEach(t => {
-        // Ambil tanggal saja (YYYY-MM-DD)
-        const dateKey = t.created_at.substring(0, 10);
+        // Ambil tanggal YYYY-MM-DD Lokal (Penting!)
+        const d = new Date(t.created_at);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const dateKey = `${year}-${month}-${day}`;
         
         if (t.type === 'income') {
             inc += t.amount;
@@ -189,12 +191,37 @@ export default function LaporanPage() {
 
   const formatDateFull = (dateStr: string | null) => {
     if(!dateStr) return "-";
-    const d = new Date(dateStr.replace(" ", "T"));
+    // dateStr sudah dalam format YYYY-MM-DD dari calculateStats
+    const d = new Date(dateStr); 
     return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+  };
+
+  // --- NAVIGASI KE DETAIL DENGAN FORMAT BENAR ---
+ const navigateToDetail = (type: 'income' | 'expense', dateStr: string | null) => {
+    if (!dateStr) return;
+    // dateStr should be YYYY-MM-DD from your logic
+    router.push(`/dashboard/detail?mode=${type}&date=${dateStr}`);
   };
 
   return (
     <div className="space-y-8 pb-10">
+        
+        {/* --- HEADER NAVIGATION --- */}
+        <div className="flex items-center gap-4 mb-2">
+            <button 
+                onClick={() => router.back()} 
+                className="group flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition"
+                title="Kembali"
+            >
+                <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <div>
+                <h1 className="text-xl font-bold text-white">Analisis Laporan</h1>
+                <p className="text-xs text-slate-500">Ringkasan keuangan bulanan</p>
+            </div>
+        </div>
         
         {/* HEADER & FILTER PERIODE */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -298,10 +325,14 @@ export default function LaporanPage() {
                             <div className="mt-4">
                                 <p className="text-3xl font-bold text-white">{formatRupiah(stats.maxIncomeAmount)}</p>
                                 <p className="text-sm text-slate-400 mt-1">{formatDateFull(stats.maxIncomeDay)}</p>
-                                {/* Tombol Link ke Detail (Nanti diimplementasikan) */}
-                                <a href={`/dashboard/detail?mode=income&date=${stats.maxIncomeDay}`} className="inline-flex items-center gap-2 mt-4 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition cursor-pointer">
+                                
+                                {/* Tombol Link ke Detail (Diperbaiki) */}
+                                <button 
+                                  onClick={() => navigateToDetail('income', stats.maxIncomeDay)} 
+                                  className="inline-flex items-center gap-2 mt-4 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition"
+                                >
                                     Lihat Rinciannya &rarr;
-                                </a>
+                                </button>
                             </div>
                         ) : (
                             <div className="mt-4 text-sm text-slate-500">Tidak ada pemasukan bulan ini.</div>
@@ -322,9 +353,14 @@ export default function LaporanPage() {
                             <div className="mt-4">
                                 <p className="text-3xl font-bold text-white">{formatRupiah(stats.maxExpenseAmount)}</p>
                                 <p className="text-sm text-slate-400 mt-1">{formatDateFull(stats.maxExpenseDay)}</p>
-                                <a href={`/dashboard/detail?mode=expense&date=${stats.maxExpenseDay}`} className="inline-flex items-center gap-2 mt-4 text-xs font-medium text-rose-500 hover:text-rose-400 transition cursor-pointer">
+                                
+                                {/* Tombol Link ke Detail (Diperbaiki) */}
+                                <button 
+                                  onClick={() => navigateToDetail('expense', stats.maxExpenseDay)} 
+                                  className="inline-flex items-center gap-2 mt-4 text-xs font-medium text-rose-500 hover:text-rose-400 transition"
+                                >
                                     Lihat Rinciannya &rarr;
-                                </a>
+                                </button>
                             </div>
                         ) : (
                             <div className="mt-4 text-sm text-slate-500">Tidak ada pengeluaran bulan ini.</div>
