@@ -114,7 +114,8 @@ export default function SuspendedPage() {
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
                 Halo <span className="text-emerald-400 font-bold capitalize">{username}</span>, masa trial Anda telah habis. 
-                <br/>Silakan lakukan pembayaran untuk mengaktifkan kembali akses penuh.
+                <br/>Silakan lakukan pembayaran Rp.18.000 untuk mengaktifkan kembali.
+                <br/>bantu tingkatkan layanan ini dan sebagai support kepada pengembang 
             </p>
         </div>
 
