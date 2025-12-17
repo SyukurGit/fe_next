@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 // Interface sesuai dengan respon API Backend yang baru
 interface UserProfile {
@@ -22,13 +23,12 @@ export default function PengaturanAkunPage() {
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('jwt_token'); // Pastikan key token konsisten ('token' atau 'jwt_token')
+    const token = localStorage.getItem('jwt_token'); 
     if (!token) {
         router.push('/login');
         return;
     }
 
-    // 1. Load data awal dari LocalStorage (jika ada) biar cepat
     const localUserStr = localStorage.getItem('user');
     if (localUserStr) {
         try {
@@ -39,15 +39,12 @@ export default function PengaturanAkunPage() {
         }
     }
 
-    // 2. Ambil Data LIVE dari Server
     fetchLatestProfile(token);
   }, [router]);
 
   const fetchLatestProfile = async (token: string) => {
     setIsChecking(true);
     try {
-        // Panggil endpoint /user/settings (bukan /user/profile karena di user.go namanya GetUserSettings)
-        // Tambahkan timestamp agar tidak dicache browser
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/settings?t=${Date.now()}`, {
             headers: { 
                 'Authorization': `Bearer ${token}`,
@@ -58,14 +55,9 @@ export default function PengaturanAkunPage() {
 
         if (res.ok) {
             const data = await res.json();
-            
-            // Log untuk debugging: Pastikan telegram_id ada di sini!
             console.log("🔥 Data Profile Server:", data);
-
-            // Update State
             setUser(data);
 
-            // Update LocalStorage agar sinkron
             const localUserStr = localStorage.getItem('user');
             if (localUserStr) {
                 const updatedLocal = { ...JSON.parse(localUserStr), ...data };
@@ -83,19 +75,17 @@ export default function PengaturanAkunPage() {
     <div className="max-w-xl mx-auto space-y-6 pb-10">
 
        <button 
-  onClick={() => router.push('/dashboard')} 
-  className="group flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition"
-  title="Kembali"
->
-  <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
-  </svg>
-</button>
-
+          onClick={() => router.push('/dashboard')} 
+          className="group flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition"
+          title="Kembali"
+        >
+          <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
       
       {/* --- HEADER USER INFO --- */}
       <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
-          {/* Loading Bar Animation */}
           {isChecking && (
             <div className="absolute top-0 left-0 w-full h-0.5 bg-slate-800 overflow-hidden">
                 <div className="w-full h-full bg-emerald-500 animate-progress origin-left-right"></div>
@@ -166,7 +156,6 @@ export default function PengaturanAkunPage() {
                   <span>🔗</span> Integrasi Telegram
               </h3>
               
-              {/* INDIKATOR STATUS */}
               {user.telegram_id && user.telegram_id !== 0 ? (
                   <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full border border-blue-500/20 font-bold animate-pulse">
                       TERHUBUNG
@@ -179,8 +168,6 @@ export default function PengaturanAkunPage() {
           </div>
 
           <div className="p-6 space-y-4">
-              
-              {/* KONDISI: SUDAH TERHUBUNG */}
               {user.telegram_id && user.telegram_id !== 0 ? (
                   <div className="space-y-4 animate-in fade-in zoom-in duration-300">
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center">
@@ -195,7 +182,6 @@ export default function PengaturanAkunPage() {
                       </Link>
                   </div>
               ) : (
-                  /* KONDISI: BELUM TERHUBUNG */
                   <div className="text-center space-y-4 animate-in fade-in zoom-in duration-300">
                       <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-3xl opacity-50">
                           ✈️
@@ -208,9 +194,61 @@ export default function PengaturanAkunPage() {
                       </Link>
                   </div>
               )}
-
           </div>
       </div>
+
+      {/* --- MENU 4: ABOUT / TENTANG --- */}
+<div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 text-center space-y-4">
+  
+  {/* Logo clickable */}
+  <a
+    href="https://www.a76labs.online"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="relative w-20 h-14 mx-auto block opacity-80 hover:opacity-100 transition duration-300"
+  >
+    <Image 
+      src="/images/a76.png" 
+      alt="A76 Labs" 
+      fill 
+      className="object-contain"
+    />
+  </a>
+
+  <div className="space-y-2">
+    {/* Text clickable */}
+    <a
+      href="https://www.a76labs.online"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-sm text-slate-300 font-medium hover:text-white transition"
+    >
+      Developed by A76 Labs
+    </a>
+
+    <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+      Butuh bantuan, ada pertanyaan, atau ingin melaporkan masalah? Hubungi admin kami langsung via Telegram.
+    </p>
+  </div>
+
+  {/* Telegram Button */}
+  <a 
+    href="https://t.me/A76Labs" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-bold px-4 py-2 rounded-full border border-slate-700 transition shadow-sm hover:shadow-md"
+  >
+    <svg
+      className="w-4 h-4"
+      fill="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.306-.346-.106l-6.4 4.022-2.76-.848c-.602-.187-.61-.6.125-.892l10.78-4.156c.5-.187.943.128.808.815z"/>
+    </svg>
+    Hubungi Admin Support
+  </a>
+</div>
+
 
     </div>
   );

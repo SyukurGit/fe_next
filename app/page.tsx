@@ -196,7 +196,7 @@ export default function LandingPage() {
 
                         <p className="text-sm text-slate-400 leading-tight mt-1">
                             Dev:
-                            <a href="https://t.me/unxpctedd" 
+                            <a href="https://t.me/A76Labs" 
                                target="_blank" 
                                className="text-emerald-500 hover:underline ml-1">
                                 @unxpctedd
