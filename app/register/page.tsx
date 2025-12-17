@@ -169,7 +169,7 @@ export default function RegisterPage() {
                 {isLoading ? (
                     <span className="animate-pulse">Memproses...</span>
                 ) : (
-                    "Lanjut Daftar & Baca Syarat"
+                    "Lanjut & Baca Syarat"
                 )}
             </button>
 
@@ -188,6 +188,9 @@ export default function RegisterPage() {
         {/* Footer Link */}
         <p className="text-center text-xs text-slate-500 mt-6">
             Sudah punya akun? <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium hover:underline">Login di sini</Link>
+        </p>
+         <p className="text-center text-xs text-slate-400 mt-2">
+            Login Superadmin? <Link href="/superadmin/login" className="text-emerald-400 hover:text-emerald-300 underline">klik di sini</Link>
         </p>
       </div>
 
