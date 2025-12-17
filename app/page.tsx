@@ -39,12 +39,12 @@ export default function LandingPage() {
             </div>
             <div className="flex gap-3">
                 {/* Menambahkan tombol Register di Navbar agar lebih mudah diakses */}
-                <Link 
+                {/* <Link 
                   href="/register" 
                   className="hidden md:block text-slate-300 hover:text-white px-4 py-2 text-sm font-medium transition"
                 >
                     Daftar Akun
-                </Link>
+                </Link> */}
                 <Link 
                   href="/login" 
                   className="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-full text-sm font-medium transition border border-slate-700"
@@ -86,7 +86,7 @@ export default function LandingPage() {
         </h1>
         
         <p className="text-slate-400 max-w-lg text-lg mb-8 leading-relaxed">
-            Catat pemasukan dan pengeluaran langsung dari Web dan Telegram. 
+            Catat pemasukan dan pengeluaran langsung dari Web atau Telegram. 
             Efisien, cepat, dan Mudah.
         </p>
 
@@ -100,10 +100,10 @@ export default function LandingPage() {
                 Chat Bot Sekarang
             </a>
             <Link 
-              href="/dashboard" 
+              href="/register" 
               className="bg-slate-900 border border-slate-800 hover:border-slate-600 text-slate-300 px-8 py-3.5 rounded-xl font-semibold transition"
             >
-                Masuk Dashboard
+                Ayo Daftar Sekarang
             </Link>
         </div>
       </header>
@@ -124,7 +124,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="font-bold text-white mb-2">Registrasi Akun</h3>
                 <p className="text-sm text-slate-400 mb-4">
-                    Tidak perlu menunggu admin. Buat akun Anda sendiri langsung melalui website untuk mendapatkan akses dashboard seketika.
+                 Buat dan Daftar akun Anda sendiri langsung melalui website untuk mendapatkan akses dashboard seketika.
                 </p>
                 <Link href="/register" className="text-emerald-400 font-bold text-sm hover:underline flex items-center gap-1">
                     Daftar di sini &rarr;

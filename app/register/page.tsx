@@ -138,7 +138,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Password (6 kata minimal)</label>
                 <input 
                     type="password" 
                     value={form.password}
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                 {isLoading ? (
                     <span className="animate-pulse">Memproses...</span>
                 ) : (
-                    "Lanjut & Baca Syarat"
+                    "Baca Syarat & Lanjut Daftar.. "
                 )}
             </button>
 
@@ -186,11 +186,11 @@ export default function RegisterPage() {
         </form>
 
         {/* Footer Link */}
-        <p className="text-center text-xs text-slate-500 mt-6">
+        <p className="text-center text-xs text-slate-300 mt-6">
             Sudah punya akun? <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium hover:underline">Login di sini</Link>
         </p>
-         <p className="text-center text-xs text-slate-400 mt-2">
-            Login Superadmin? <Link href="/superadmin/login" className="text-emerald-400 hover:text-emerald-300 underline">klik di sini</Link>
+         <p className="text-center text-xs text-slate-500 mt-4">
+            Login Superadmin? <Link href="/superadmin/login" className="text-emerald-400 hover:text-emerald-300 hover:underline">klik di sini</Link>
         </p>
       </div>
 
