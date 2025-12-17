@@ -34,9 +34,9 @@ export default function InputPage() {
   // Update saran kategori saat tipe berubah
   useEffect(() => {
     if (type === 'income') {
-      setSuggestions(['Gaji', 'Bonus', 'Tunjangan', 'Jualan']);
+      setSuggestions(['Gaji', 'Bonus', 'Cairr', 'Hadiah']);
     } else {
-      setSuggestions(['Makan', 'Minum', 'Bensin', 'Belanja', 'Tagihan', 'Parkir']);
+      setSuggestions(['Makan', 'Ngopi',  'Belanja','Surya', 'Tagihan']);
     }
   }, [type]);
 
