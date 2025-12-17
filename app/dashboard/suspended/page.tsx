@@ -114,7 +114,7 @@ export default function SuspendedPage() {
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
                 Halo <span className="text-emerald-400 font-bold capitalize">{username}</span>, masa trial Anda telah habis. 
-                <br/>Silakan lakukan pembayaran Rp.18.000 untuk mengaktifkan kembali.
+                <br/>Ayo lakukan pembayaran Rp.18.000.
                 <br/>bantu tingkatkan layanan ini dan sebagai support kepada pengembang 
             </p>
         </div>
@@ -164,7 +164,7 @@ export default function SuspendedPage() {
                     </button>
                     
                     <div className="text-center space-y-1 mt-4">
-                        <p className="text-sm font-bold text-slate-300">A76 LABS - DOMPET PINTAR</p>
+                        <p className="text-sm font-bold text-slate-300">QRIS : "Syukur SparkTech"</p>
                         <p className="text-xs text-slate-500">Menerima Semua E-Wallet & Mobile Banking</p>
                     </div>
                 </div>

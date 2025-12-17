@@ -122,7 +122,7 @@ export default function WaitingPage() {
             </p>
 
             <div className="border-t border-slate-800 pt-6">
-                <p className="text-xs text-slate-500 mb-3">Salah kirim gambar? Upload ulang di sini:</p>
+                <p className="text-xs text-slate-500 mb-3">Jika salah kirim gambar, Bisa Upload ulang lagi di sini:</p>
                 
                 <label className={`w-full bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     {isUploading ? (

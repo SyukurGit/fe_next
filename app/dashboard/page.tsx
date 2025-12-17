@@ -4,7 +4,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -51,7 +50,13 @@ export default function DashboardPage() {
   const [username, setUsername] = useState<string>('User');
   const [userStatus, setUserStatus] = useState<string>('');
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
+  const [telegramId, setTelegramId] = useState<number | null>(null); // State untuk cek binding
   const [trialCountdown, setTrialCountdown] = useState<string>('');
+
+  // State Limit
+  const [dailyLimit, setDailyLimit] = useState<number>(0);
+  const [todayExpense, setTodayExpense] = useState<number>(0);
+  const [isLimitDismissed, setIsLimitDismissed] = useState(false);
 
   // State Data
   const [summary, setSummary] = useState<SummaryData>({ saldo: 0, income: 0, expense: 0 });
@@ -77,7 +82,11 @@ export default function DashboardPage() {
         const user = JSON.parse(userStr);
         setUsername(user.username || 'User');
         setUserStatus(user.status || '');
-        setTrialEndsAt(user.trial_ends_at || null); // Pastikan key JSON sesuai backend (user_trial_ends_at atau trial_ends_at)
+        setTrialEndsAt(user.trial_ends_at || null);
+        
+        // Simpan data penting untuk validasi
+        setTelegramId(user.telegram_id || null);
+        setDailyLimit(Number(user.daily_limit) || 0);
 
         // Redirect logic (Middleware Frontend)
         if (user.status === 'suspended') router.push('/dashboard/suspended');
@@ -93,7 +102,6 @@ export default function DashboardPage() {
 
     // Start Polling (Live Sync setiap 3 detik)
     pollingRef.current = setInterval(() => {
-      // Kita fetch background tanpa loading spinner agar UX mulus
       fetchSummary(true); 
       fetchChart(true);
     }, 3000);
@@ -126,7 +134,7 @@ export default function DashboardPage() {
       setTrialCountdown(`${days} hari ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
     };
 
-    updateCountdown(); // Run immediately
+    updateCountdown(); 
     countdownRef.current = setInterval(updateCountdown, 1000);
 
     return () => {
@@ -184,11 +192,29 @@ export default function DashboardPage() {
     }
   };
 
-  // --- CHART PROCESSING ---
+  // --- CHART PROCESSING & EXPENSE CALCULATION ---
   const processChartData = (rawData: ChartItem[]) => {
-    // Sort data berdasarkan tanggal
+    // 1. Sort data
     const sorted = rawData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
+    // 2. Hitung Pengeluaran HARI INI (FIXED TIMEZONE & SPEED)
+    // Menggunakan waktu lokal browser untuk mencocokkan dengan data
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`; // Format YYYY-MM-DD Lokal
+
+    const todayData = sorted.find(d => d.date === todayStr);
+    
+    // Update state expense instan
+    if (todayData) {
+        setTodayExpense(todayData.expense);
+    } else {
+        setTodayExpense(0);
+    }
+
+    // 3. Siapkan data chart (kode lama tetap sama)
     const labels = sorted.map(d => new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
     const incomeData = sorted.map(d => d.income || 0);
     const expenseData = sorted.map(d => d.expense || 0);
@@ -199,7 +225,7 @@ export default function DashboardPage() {
         {
           label: 'Pemasukan',
           data: incomeData,
-          borderColor: '#10b981', // Emerald 500
+          borderColor: '#10b981', 
           backgroundColor: (context: ScriptableContext<"line">) => {
             const ctx = context.chart.ctx;
             const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -216,7 +242,7 @@ export default function DashboardPage() {
         {
           label: 'Pengeluaran',
           data: expenseData,
-          borderColor: '#f43f5e', // Rose 500
+          borderColor: '#f43f5e', 
           backgroundColor: 'transparent',
           borderDash: [4, 4],
           tension: 0.4,
@@ -226,6 +252,22 @@ export default function DashboardPage() {
         }
       ]
     });
+  };
+
+  // --- HANDLER TELEGRAM CLICK ---
+  const handleTeleClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Cegah link default
+    
+    // Cek Bind
+    if (!telegramId || telegramId === 0) {
+        const confirmBind = confirm("⚠️ Akun Telegram Belum Terhubung!\n\nAnda perlu menghubungkan akun Telegram terlebih dahulu untuk menggunakan fitur Bot. Buka halaman pengaturan?");
+        if (confirmBind) {
+            router.push('/dashboard/pengaturan/telegram');
+        }
+    } else {
+        // Jika sudah bind, buka link di tab baru
+        window.open('https://t.me/DompetPintar_A76Labs_Bot', '_blank');
+    }
   };
 
   const formatRupiah = (num: number) => 
@@ -241,9 +283,41 @@ export default function DashboardPage() {
     );
   }
 
+  // Cek apakah melebihi limit (Hanya tampil jika limit diset > 0)
+const isOverLimit = dailyLimit > 0 && todayExpense > dailyLimit && !isLimitDismissed;
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       
+      {/* --- ALERT OVER LIMIT (STICKY / TOP BANNER) --- */}
+      {isOverLimit && (
+        <div className="bg-rose-950/40 border border-rose-500/50 rounded-xl p-4 animate-in slide-in-from-top-4 duration-300 shadow-lg shadow-rose-900/20 backdrop-blur-sm">
+            <div className="flex justify-between items-start gap-4">
+                
+                {/* Kiri: Icon & Teks */}
+                <div className="flex items-start gap-3">
+                    <div className="p-2 bg-rose-500/20 text-rose-400 rounded-full shrink-0 mt-0.5">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 className="text-rose-400 font-bold text-sm">Peringatan Limit Harian!</h3>
+                        <p className="text-slate-300 text-xs mt-1 leading-relaxed">
+                            Pengeluaran hari ini (<span className="font-mono font-bold text-white">{formatRupiah(todayExpense)}</span>) telah melewati batas (<span className="font-mono text-slate-400">{formatRupiah(dailyLimit)}</span>).
+                        </p>
+                    </div>
+                </div>
+
+                {/* Kanan: Tombol Close (X) */}
+                <button 
+                    onClick={() => setIsLimitDismissed(true)}
+                    className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition shrink-0"
+                    title="Tutup Notifikasi"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+      )}
+
       {/* SECTION 1: HEADER & WELCOME */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -280,9 +354,13 @@ export default function DashboardPage() {
             Input <span className="text-emerald-400 font-semibold">pemasukan</span> atau 
             <span className="text-rose-400 font-semibold"> pengeluaran</span>? 
             Bisa via web atau via Bot Telegram di 
-            <a href="https://t.me/DompetPintar_A76Labs_Bot" target="_blank" className="text-emerald-400 font-semibold hover:text-emerald-200 hover:underline ml-1">
+            {/* UPDATED LINK LOGIC */}
+            <button 
+                onClick={handleTeleClick} 
+                className="text-emerald-400 font-semibold hover:text-emerald-200 hover:underline ml-1 bg-transparent border-none cursor-pointer focus:outline-none"
+            >
                 @DompetPintar_A76Labs_Bot
-            </a>.
+            </button>.
         </p>
 
         <Link href="/dashboard/input" className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-900 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 w-full md:w-auto transition">
@@ -407,25 +485,6 @@ export default function DashboardPage() {
       {/* FOOTER AREA */}
       <footer className="border-t border-slate-900 bg-slate-950 pt-12 pb-8 mt-10">
         <div className="max-w-6xl mx-auto px-6 flex flex-col items-center text-center space-y-6">
-            
-            {/* Support Box */}
-            {/* <div className="border border-slate-800 rounded-2xl bg-slate-900/80 p-4 flex flex-col items-center gap-4 w-full max-w-md">
-                <div>
-                    <p className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1">
-                        Support Sanger Dingin ☕ Segelas
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                        Klik gambar untuk buka Qris Full
-                    </p>
-                </div>
-                <a href="/images/qris.jpeg" target="_blank" className="shrink-0 group">
-                    <div className="w-24 h-24 relative rounded-xl overflow-hidden border border-slate-700 group-hover:border-emerald-400 transition">
-                        <Image src="/images/qris.jpeg" alt="QRIS" fill className="object-cover" />
-                    </div>
-                </a>
-            </div> */}
-
-            {/* Copyright */}
             <div className="w-full h-px bg-slate-900"></div>
             <p className="text-xs text-slate-600">
                 &copy; 2025 DompetPintarBot. All rights reserved. <br/>
