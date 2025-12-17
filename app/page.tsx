@@ -188,7 +188,7 @@ export default function LandingPage() {
                     </div>
 
                     <div className="text-left">
-                        <a href="https://t.me/unxpctedd" 
+                        <a href="https://www.a76labs.online/" 
                            target="_blank" 
                            className="text-base font-bold text-white leading-tight hover:underline hover:text-green-500">
                             A76 Labs.
