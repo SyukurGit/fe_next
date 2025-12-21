@@ -1,20 +1,20 @@
 <div align="center">
   <a href="https://dompetpintar-demo.vercel.app">
-    <img src="./public/images/croplogobot.png" alt="Logo Dompet Pintar" width="120" height="120" />
+    <img src="./public/images/croplogobot.png" alt="Dompet Pintar Logo" width="120" height="120" />
   </a>
 
   <h1 align="center">Dompet Pintar (Smart Wallet Bot)</h1>
 
   <p align="center">
-    <strong>Ekosistem Manajemen Keuangan Pribadi Terintegrasi (Web & Telegram)</strong>
+    <strong>Integrated Personal Finance Management Ecosystem (Web & Telegram)</strong>
   </p>
 
   <p align="center">
-    <a href="https://dompetpintar-demo.vercel.app">Live Demo</a>
+    <a href="https://dompetpintar.a76labs.online">Live Website</a>
     ·
-    <a href="#-fitur-unggulan">Fitur Utama</a>
+    <a href="#-key-features">Key Features</a>
     ·
-    <a href="#-teknologi">Teknologi</a>
+    <a href="#-technology">Technology</a>
   </p>
 
   <p align="center">
@@ -27,44 +27,44 @@
 
 ---
 
-## 🚀 Tentang Project
+## 🚀 About the Project
 
-**Dompet Pintar** adalah platform *financial tracking* modern yang dirancang untuk menyederhanakan pencatatan dan analisis keuangan pribadi. Aplikasi ini mengintegrasikan **Bot Telegram** sebagai media input transaksi yang cepat dan fleksibel, serta **Dashboard Web** berbasis **Next.js** untuk visualisasi dan analisis data yang komprehensif.
+**Dompet Pintar** is a modern *financial tracking* platform designed to simplify personal finance recording and analysis. The application integrates a **Telegram Bot** for fast, on-the-go transaction input with a **Next.js-based Web Dashboard** for comprehensive visualization and financial insights.
 
-Dengan arsitektur *real-time oriented*, setiap transaksi yang dicatat melalui Telegram Bot akan langsung tersinkronisasi dan tampil pada dashboard web tanpa perlu melakukan *refresh* manual.
+Built with a *real-time oriented architecture*, every transaction recorded via the Telegram Bot is automatically synchronized and instantly reflected on the web dashboard without requiring manual page refreshes.
 
 ---
 
-## ✨ Fitur Unggulan
+## ✨ Key Features
 
 ### 1. ⚡ Hybrid Input System (Web & Telegram)
 
-* **Telegram Bot Integration** – Input transaksi semudah chatting (contoh: `20rb makan siang`).
-* **Web Dashboard** – Form input detail untuk pencatatan yang lebih lengkap.
-* **Live Data Sync** – Sinkronisasi data otomatis antara Bot dan Web menggunakan *smart polling mechanism*.
+* **Telegram Bot Integration** – Record transactions as easily as sending a chat message (e.g., `20k lunch`).
+* **Web Dashboard** – Detailed input forms for more structured and comprehensive data entry.
+* **Live Data Synchronization** – Automatic data sync between the Bot and Web Dashboard using a *smart polling mechanism*.
 
-### 2. 📊 Visualisasi & Analisis Data
+### 2. 📊 Data Visualization & Analytics
 
-* **Interactive Charts** – Grafik tren cashflow 30 hari terakhir.
-* **Smart Summary** – Perhitungan otomatis pemasukan, pengeluaran, dan saldo akhir.
-* **Export Laporan** – Unduh laporan keuangan bulanan dalam format **Excel (.xlsx)**.
+* **Interactive Charts** – Cashflow trend visualization for the last 30 days.
+* **Smart Summary** – Automatic calculation of income, expenses, and remaining balance.
+* **Report Export** – Download monthly financial reports in **Excel (.xlsx)** format.
 
-### 3. 🛡️ Keamanan & Manajemen User
+### 3. 🛡️ Security & User Management
 
-* **Role-Based Access Control (RBAC)** – Pemisahan akses antara **User** dan **Superadmin**.
-* **JWT Authentication** – Sistem autentikasi aman dengan proteksi rute (*middleware*).
-* **Account Status System** – Dukungan status akun: Active, Suspended, Pending, Trial.
+* **Role-Based Access Control (RBAC)** – Clear access separation between **User** and **Superadmin** roles.
+* **JWT Authentication** – Secure authentication system with protected routes via middleware logic.
+* **Account Status Management** – Support for multiple account states: Active, Suspended, Pending, and Trial.
 
-### 4. 📱 UI Modern & Responsif
+### 4. 📱 Modern & Responsive UI
 
-* **Mobile-First Design** – Optimal di desktop, tablet, dan perangkat mobile.
-* **Dark Mode Native** – Tampilan modern dengan palet warna slate & emerald.
+* **Mobile-First Design** – Optimized for desktop, tablet, and mobile devices.
+* **Native Dark Mode** – Modern interface with a comfortable slate and emerald color palette.
 
 ---
 
-## 🛠️ Teknologi
+## 🛠️ Technology
 
-| Kategori      | Teknologi                  |
+| Category      | Technology                 |
 | ------------- | -------------------------- |
 | Framework     | Next.js 16 (App Router)    |
 | Core Library  | React 19                   |
@@ -76,40 +76,31 @@ Dengan arsitektur *real-time oriented*, setiap transaksi yang dicatat melalui Te
 
 ---
 
-## 📂 Struktur Project
+## 📂 Project Structure
 
-Struktur folder dirancang dengan pendekatan *clean architecture* agar mudah dikembangkan dan dipelihara:
+The folder structure follows a *clean architecture* approach to ensure scalability and maintainability:
 
 ```bash
 fe_next/
 ├── app/
 │   ├── dashboard/          # Protected user area
-│   │   ├── chart/          # Detail grafik
-│   │   ├── laporan/        # Export & analisis laporan
-│   │   ├── pengaturan/     # Profil & limit user
-│   │   └── page.tsx        # Dashboard core
-│   ├── login/              # Autentikasi
-│   ├── superadmin/         # Admin area
+│   │   ├── chart/          # Chart details
+│   │   ├── laporan/        # Report export & analysis
+│   │   ├── pengaturan/     # User profile & limits
+│   │   └── page.tsx        # Dashboard core logic
+│   ├── login/              # Authentication pages
+│   ├── superadmin/         # Admin-only area
 │   └── page.tsx            # Landing page
 ├── components/             # Reusable UI components
 ├── public/                 # Static assets
-└── config files
+└── configuration files
 ```
 
 ---
 
-## 📸 Pratinjau Aplikasi
+## 🚀 Getting Started (Local Development)
 
-> Tambahkan screenshot aplikasi untuk meningkatkan daya tarik dokumentasi.
-
-* **Dashboard Utama (Desktop)**
-* **Tampilan Mobile**
-
----
-
-## 🚀 Cara Menjalankan (Local Development)
-
-### 1. Clone Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/username/dompet-pintar.git
@@ -120,27 +111,27 @@ cd dompet-pintar
 
 ```bash
 npm install
-# atau
+# or
 yarn install
 ```
 
-### 3. Konfigurasi Environment
+### 3. Environment Configuration
 
-Buat file `.env.local` di root project:
+Create a `.env.local` file in the project root:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 
-### 4. Jalankan Development Server
+### 4. Run the Development Server
 
 ```bash
 npm run dev
 ```
 
-### 5. Akses Aplikasi
+### 5. Access the Application
 
-Buka browser dan akses:
+Open your browser and navigate to:
 
 ```
 http://localhost:3000
@@ -148,8 +139,8 @@ http://localhost:3000
 
 ---
 
-## 🤝 Kontribusi & Credits
+## 🤝 Contribution & Credits
 
-Project ini dikembangkan dengan ❤️ oleh **A76 Labs**.
+This project is developed with ❤️ by **A76 Labs**.
 
-Kontribusi, ide fitur baru, dan diskusi sangat terbuka melalui *Pull Request* atau *Issue* pada repository ini.
+Contributions, feature ideas, and technical discussions are highly welcome through *Pull Requests* or *Issues* on the repository.
