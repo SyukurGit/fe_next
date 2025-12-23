@@ -40,40 +40,57 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             body > .skiptranslate { display: none !important; }
         `}</style>
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-100`}>
-        
-        {/* SCRIPT GOOGLE TRANSLATE */}
-        <Script id="google-translate-init" strategy="afterInteractive">
-          {`
-            function googleTranslateElementInit() {
-              new google.translate.TranslateElement({
-                pageLanguage: 'id',
-                includedLanguages: 'id,en',
-                autoDisplay: false, // JANGAN TAMPILKAN POPUP
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-              }, 'google_translate_element');
-            }
+    <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-100`}>
+  
+  {/* SCRIPT GOOGLE TRANSLATE UPDATE */}
+  <Script id="google-translate-init" strategy="afterInteractive">
+    {`
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+          pageLanguage: 'id',
+          includedLanguages: 'id,en',
+          autoDisplay: false,
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+        }, 'google_translate_element');
+      }
 
-            // AUTO DETECT LANGUAGE
-            if (!document.cookie.split('; ').find(row => row.trim().startsWith('googtrans='))) {
+      // LOGIC INIT YANG LEBIH AMAN BUAT VERCEL
+      // Kita cek apakah cookie googtrans SUDAH ADA.
+      // Kalau sudah ada (misal diset sama NinjaSwitcher), JANGAN SENTUH.
+      // Kalau belum ada, baru kita set default sesuai bahasa browser.
+      
+      (function() {
+          var cookies = document.cookie.split('; ');
+          var googtrans = cookies.find(function(row) { 
+              return row.trim().startsWith('googtrans='); 
+          });
+
+          if (!googtrans) {
+              // Cookie belum ada, set default
               var lang = navigator.language || navigator.userLanguage; 
+              var domain = window.location.hostname;
+              
+              var cookieVal = "/id/id"; // Default Indo
               if (lang.indexOf('id') === -1) {
-                document.cookie = "googtrans=/id/en; path=/";
-                document.cookie = "googtrans=/id/en; path=/; domain=" + window.location.hostname;
-              } else {
-                document.cookie = "googtrans=/id/id; path=/";
-                document.cookie = "googtrans=/id/id; path=/; domain=" + window.location.hostname;
+                  cookieVal = "/id/en"; // Kalau bukan indo, jadi Inggris
               }
-            }
-          `}
-        </Script>
-        <Script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" strategy="afterInteractive" />
 
-        {/* ELEMENT GOOGLE (HIDDEN TAPI WAJIB ADA) */}
-        <div id="google_translate_element" style={{ display: 'none' }}></div>
+              // Set default Host Only (biasanya cukup)
+              document.cookie = "googtrans=" + cookieVal + "; path=/";
+              
+              // Set default Domain juga buat jaga-jaga
+              document.cookie = "googtrans=" + cookieVal + "; path=/; domain=" + domain;
+          }
+      })();
+    `}
+  </Script>
+  <Script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" strategy="afterInteractive" />
 
-        {children}
-      </body>
+  {/* ELEMENT GOOGLE (HIDDEN) */}
+  <div id="google_translate_element" style={{ display: 'none' }}></div>
+
+  {children}
+</body>
     </html>
   );
 }

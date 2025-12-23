@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ChevronDown, Check, Globe } from "lucide-react"; // Pastikan install lucide-react jika belum
+// Pastikan install lucide-react, atau ganti icon pakai text/svg biasa jika error
+import { ChevronDown, Check, Globe } from "lucide-react"; 
 
 export default function NinjaSwitcher() {
   const [currentLang, setCurrentLang] = useState("ID");
@@ -12,17 +13,18 @@ export default function NinjaSwitcher() {
 
   useEffect(() => {
     setMounted(true);
-    // Cek cookie
+    // Cek cookie saat ini
     const cookies = document.cookie.split('; ');
     const googtrans = cookies.find(row => row.trim().startsWith('googtrans='));
     
+    // Logic deteksi sederhana
     if (googtrans && googtrans.includes('/en')) {
       setCurrentLang("EN");
     } else {
       setCurrentLang("ID");
     }
 
-    // Klik di luar untuk tutup dropdown
+    // Listener klik luar untuk tutup dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -33,21 +35,44 @@ export default function NinjaSwitcher() {
   }, []);
 
   const changeLanguage = (lang: string) => {
+    // 1. Tentukan Value Cookie Google Translate
+    // Format: /bahasa_asal/bahasa_tujuan
+    const value = lang === 'en' ? '/id/en' : '/id/id';
+    
     const domain = window.location.hostname;
+    // Potong 'www.' jika ada biar bersih
+    const cleanDomain = domain.replace(/^www\./, ''); 
+
+    // 2. HAPUS COOKIE LAMA (NUCLEAR METHOD) ☢️
+    // Kita hapus di semua kemungkinan path dan domain biar tidak ada cookie 'zombie'
     const expires = "expires=Thu, 01 Jan 1970 00:00:00 UTC";
     
-    // Bersihkan cookie lama
+    // Hapus: Host Only
     document.cookie = `googtrans=;${expires};path=/`;
+    // Hapus: Domain saat ini
     document.cookie = `googtrans=;${expires};path=/;domain=${domain}`;
+    // Hapus: Dot Domain (untuk subdomain)
     document.cookie = `googtrans=;${expires};path=/;domain=.${domain}`;
+    // Hapus: Clean Domain
+    document.cookie = `googtrans=;${expires};path=/;domain=${cleanDomain}`;
+    document.cookie = `googtrans=;${expires};path=/;domain=.${cleanDomain}`;
 
-    // Set cookie baru
-    const value = lang === 'en' ? '/id/en' : '/id/id';
-    document.cookie = `googtrans=${value};path=/`;
-    document.cookie = `googtrans=${value};path=/;domain=${domain}`;
+    // 3. SET COOKIE BARU (Double Tap) 🔫
+    // Kita set di dua tempat untuk memastikan Google script membacanya
+    
+    // Set A: Host Only (Paling sering berhasil di Vercel)
+    document.cookie = `googtrans=${value};path=/;SameSite=Lax`; 
+    
+    // Set B: Explicit Domain (Backup jika Host Only gagal)
+    document.cookie = `googtrans=${value};path=/;domain=${domain};SameSite=Lax`;
 
+    // 4. Tutup & Reload
     setIsOpen(false);
-    window.location.reload();
+    
+    // Timeout sedikit biar cookie sempat tertulis sebelum reload
+    setTimeout(() => {
+        window.location.reload();
+    }, 100);
   };
 
   if (!mounted) return null;
