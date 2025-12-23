@@ -12,13 +12,20 @@ export default function NinjaSwitcher() {
 
   useEffect(() => {
     setMounted(true);
+    // Membaca cookie yang ada untuk set state awal UI
     const cookies = document.cookie.split('; ');
     const googtrans = cookies.find(row => row.trim().startsWith('googtrans='));
     
-    if (googtrans && googtrans.includes('/en')) {
-      setCurrentLang("EN");
+    // Logika deteksi yang lebih aman
+    if (googtrans) {
+        if (googtrans.includes('/en')) {
+            setCurrentLang("EN");
+        } else {
+            setCurrentLang("ID");
+        }
     } else {
-      setCurrentLang("ID");
+        // Fallback jika tidak ada cookie, set ID sebagai default visual
+        setCurrentLang("ID");
     }
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -32,39 +39,49 @@ export default function NinjaSwitcher() {
 
   const changeLanguage = (lang: string) => {
     const domain = window.location.hostname;
-    const cleanDomain = domain.replace(/^www\./, ''); // Hapus www.
-    // Ambil bagian domain utama saja (misal: vercel.app) untuk case subdomain deep
-    const parts = cleanDomain.split('.');
-    const topLevelDomain = parts.slice(-2).join('.'); 
+    
+    // Logika domain root yang lebih robust untuk menghantam subdomain
+    // Contoh: dompet.a76labs.online -> a76labs.online
+    const parts = domain.split('.');
+    let topLevelDomain = domain;
+    if (parts.length > 2) {
+        // Ambil 2 bagian terakhir (misal: a76labs.online)
+        topLevelDomain = parts.slice(-2).join('.'); 
+    }
 
-    // Tentukan Target Cookie
-    // Kalau ID -> paksa /id/id (biar layout gak auto-detect ke EN lagi)
-    // Kalau EN -> paksa /id/en
+    // Tentukan Target Cookie Format Google Translate: /source_lang/target_lang
     const cookieValue = lang === 'en' ? '/id/en' : '/id/id';
 
-    // 1. HAPUS COOKIE LAMA (Bersihkan area)
-    const expires = "expires=Thu, 01 Jan 1970 00:00:00 UTC";
-    document.cookie = `googtrans=;${expires};path=/`;
-    document.cookie = `googtrans=;${expires};path=/;domain=${domain}`;
-    document.cookie = `googtrans=;${expires};path=/;domain=.${domain}`;
-    document.cookie = `googtrans=;${expires};path=/;domain=${cleanDomain}`;
-    document.cookie = `googtrans=;${expires};path=/;domain=.${cleanDomain}`;
-    
-    // 2. TULIS COOKIE BARU (Serangan Bertubi-tubi)
-    // Tulis di Host Only
-    document.cookie = `googtrans=${cookieValue};path=/`;
-    
-    // Tulis di Domain saat ini
-    document.cookie = `googtrans=${cookieValue};path=/;domain=${domain}`;
+    // === LANGKAH 1: NUCLEAR OPTION (Hapus Cookie Lama) ===
+    // Kita hapus di semua kemungkinan path dan domain
+    const domainsToClear = [
+        domain,                 // "dompetpintar.a76labs.online"
+        `.${domain}`,           // ".dompetpintar.a76labs.online"
+        topLevelDomain,         // "a76labs.online"
+        `.${topLevelDomain}`    // ".a76labs.online"
+    ];
 
-    // Tulis di Root Domain (khusus Vercel kadang butuh ini)
-    if (domain !== topLevelDomain) {
-        document.cookie = `googtrans=${cookieValue};path=/;domain=.${topLevelDomain}`;
+    domainsToClear.forEach(d => {
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${d}`;
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`; // Host only
+    });
+    
+    // === LANGKAH 2: SET COOKIE BARU ===
+    // Kita set di Domain Utama (Top Level) agar konsisten di semua subdomain (jika ada)
+    // Atau set di Host Only jika di localhost
+    
+    if (domain === 'localhost') {
+        document.cookie = `googtrans=${cookieValue}; path=/`;
+    } else {
+        // Set di domain spesifik dan root domain untuk memastikan 'menempel'
+        document.cookie = `googtrans=${cookieValue}; path=/`;
+        document.cookie = `googtrans=${cookieValue}; path=/; domain=${topLevelDomain}`;
+        document.cookie = `googtrans=${cookieValue}; path=/; domain=.${topLevelDomain}`;
     }
 
     setIsOpen(false);
     
-    // Reload halaman
+    // Reload halaman untuk trigger script Google Translate ulang
     window.location.reload();
   };
 
@@ -81,6 +98,7 @@ export default function NinjaSwitcher() {
         <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
+      {/* Dropdown Menu */}
       <div 
         className={`absolute top-full right-0 mt-2 w-32 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden transition-all duration-200 origin-top-right ${
           isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
