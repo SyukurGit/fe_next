@@ -11,10 +11,6 @@
 
   <p align="center">
     <a href="https://dompetpintar.a76labs.online">Live Website</a>
-    ·
-    <a href="#-key-features">Key Features</a>
-    ·
-    <a href="#-technology">Technology</a>
   </p>
 
   <p align="center">
