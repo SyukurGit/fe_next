@@ -82,7 +82,8 @@ export default function LoginPage() {
                   className="object-cover"
                 />
             </div>
-            <h1 className="font-bold text-xl text-white">
+            {/* BRANDING DILINDUNGI DARI TRANSLATE */}
+            <h1 className="font-bold text-xl text-white notranslate">
                 Dompet<span className="text-emerald-400">Pintar</span>Bot
             </h1>
             <p className="text-xs text-slate-500 mt-1">Silakan login untuk akses dashboard.</p>

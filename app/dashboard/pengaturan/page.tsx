@@ -92,11 +92,11 @@ export default function PengaturanAkunPage() {
             </div>
           )}
 
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg shrink-0">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg shrink-0 ">
               <span>{user.username ? user.username.charAt(0).toUpperCase() : 'U'}</span>
           </div>
           <div>
-              <h2 className="text-lg font-bold text-white capitalize">{user.username || 'User'}</h2>
+              <h2 className="text-lg font-bold text-white capitalize notranslate">{user.username || 'User'}</h2>
               <span 
                 className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                     user.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :

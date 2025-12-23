@@ -117,7 +117,7 @@ export default function RegisterPage() {
                   className="object-cover"
                 />
             </div>
-            <h1 className="font-bold text-xl text-white">
+            <h1 className="font-bold text-xl text-white notranslate">
                 Dompet<span className="text-emerald-400">Pintar</span>Bot
             </h1>
             <p className="text-xs text-slate-500 mt-1">Daftar untuk mendapatkan Trial Gratis 1 Hari.</p>

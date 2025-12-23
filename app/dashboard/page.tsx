@@ -301,7 +301,7 @@ const isOverLimit = dailyLimit > 0 && todayExpense > dailyLimit && !isLimitDismi
                     <div>
                         <h3 className="text-rose-400 font-bold text-sm">Peringatan Limit Harian!</h3>
                         <p className="text-slate-300 text-xs mt-1 leading-relaxed">
-                            Pengeluaran hari ini (<span className="font-mono font-bold text-white">{formatRupiah(todayExpense)}</span>) telah melewati batas (<span className="font-mono text-slate-400">{formatRupiah(dailyLimit)}</span>).
+                            Pengeluaran hari ini (<span className="font-mono font-bold text-white notranslate">{formatRupiah(todayExpense)}</span>) telah melewati batas (<span className="font-mono text-slate-400 notranslate">{formatRupiah(dailyLimit)}</span>).
                         </p>
                     </div>
                 </div>
@@ -323,7 +323,8 @@ const isOverLimit = dailyLimit > 0 && todayExpense > dailyLimit && !isLimitDismi
         <div>
             <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-bold text-white tracking-tight">
-                    Halo, <span className="text-emerald-400 capitalize">{username}</span> 👋
+                    {/* DITAMBAHKAN KELAS NOTRANSLATE DISINI */}
+                    Hallo, <span className="text-emerald-400 capitalize notranslate"> {username}</span> 👋
                 </h1>
                 
                 {userStatus === 'active' && (
@@ -377,7 +378,8 @@ const isOverLimit = dailyLimit > 0 && todayExpense > dailyLimit && !isLimitDismi
                 <svg className="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
             </div>
             <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Pemasukan</p>
-            <h3 className="text-3xl font-bold text-white mt-2 group-hover:text-emerald-400 transition">{formatRupiah(summary.income)}</h3>
+            {/* KELAS NOTRANSLATE UNTUK ANGKA */}
+            <h3 className="text-3xl font-bold text-white mt-2 group-hover:text-emerald-400 transition notranslate">{formatRupiah(summary.income)}</h3>
             <div className="mt-4 flex items-center gap-2 text-emerald-500 text-xs font-medium bg-emerald-500/10 w-fit px-2 py-1 rounded-full">
                 <span>↘ Rincian Masuk</span>
             </div>
@@ -389,7 +391,8 @@ const isOverLimit = dailyLimit > 0 && todayExpense > dailyLimit && !isLimitDismi
                 <svg className="w-16 h-16 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
             </div>
             <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Pengeluaran</p>
-            <h3 className="text-3xl font-bold text-white mt-2 group-hover:text-rose-400 transition">{formatRupiah(summary.expense)}</h3>
+            {/* KELAS NOTRANSLATE UNTUK ANGKA */}
+            <h3 className="text-3xl font-bold text-white mt-2 group-hover:text-rose-400 transition notranslate">{formatRupiah(summary.expense)}</h3>
             <div className="mt-4 flex items-center gap-2 text-rose-500 text-xs font-medium bg-rose-500/10 w-fit px-2 py-1 rounded-full">
                 <span>↘ Rincian Keluar</span>
             </div>
@@ -401,7 +404,8 @@ const isOverLimit = dailyLimit > 0 && todayExpense > dailyLimit && !isLimitDismi
                 <svg className="w-16 h-16 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             </div>
             <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Selisih Saldo (Cashflow)</p>
-            <h3 className="text-3xl font-bold text-white mt-2 group-hover:text-sky-400 transition">{formatRupiah(summary.saldo)}</h3>
+            {/* KELAS NOTRANSLATE UNTUK ANGKA */}
+            <h3 className="text-3xl font-bold text-white mt-2 group-hover:text-sky-400 transition notranslate">{formatRupiah(summary.saldo)}</h3>
             <div className="mt-4 flex items-center gap-2 text-sky-500 text-xs font-medium bg-sky-500/10 w-fit px-2 py-1 rounded-full">
                 <span>↔ Mutasi Rekening</span>
             </div>

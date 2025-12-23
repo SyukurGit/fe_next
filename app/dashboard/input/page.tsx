@@ -242,7 +242,7 @@ export default function InputPage() {
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     rows={2} 
-                    placeholder="Keterangan tambahan..."
+                    placeholder="Cash or Transfer..."
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-1 focus:border-slate-500 focus:ring-slate-500 outline-none transition text-sm resize-none"
                 ></textarea>
             </div>
@@ -278,10 +278,10 @@ export default function InputPage() {
             )}
 
             {!isLoading && todayTransactions.length > 0 && (
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y divide-slate-800 ">
                     {todayTransactions.map(trx => (
-                        <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-800/50 transition group">
-                            <div className="flex items-center gap-3 overflow-hidden">
+                        <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-800/50 transition group ">
+                            <div className="flex items-center gap-3 overflow-hidden notranslate">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0 border border-slate-800 ${trx.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                                     {trx.category.charAt(0).toUpperCase()}
                                 </div>
