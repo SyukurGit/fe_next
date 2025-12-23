@@ -41,8 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
       </head>
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-100`}>
-  
-  {/* SCRIPT GOOGLE TRANSLATE UPDATE */}
+
+  {/* SCRIPT GOOGLE TRANSLATE */}
   <Script id="google-translate-init" strategy="afterInteractive">
     {`
       function googleTranslateElementInit() {
@@ -84,7 +84,44 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       })();
     `}
   </Script>
-  <Script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" strategy="afterInteractive" />
+  <Script id="google-translate-init-2" strategy="afterInteractive">
+    {`
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'id',
+        includedLanguages: 'id,en',
+        autoDisplay: false,
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+
+    // LOGIC INIT YANG KUAT
+    (function() {
+        var cookies = document.cookie.split('; ');
+        var googtrans = cookies.find(function(row) { 
+            return row.trim().startsWith('googtrans='); 
+        });
+
+        // HANYA jalankan Auto-Detect jika cookie BENAR-BENAR KOSONG
+        if (!googtrans) {
+            var lang = navigator.language || navigator.userLanguage; 
+            var domain = window.location.hostname;
+            
+            // Default: Jangan set apa-apa dulu (biarkan native/Indo)
+            // KECUALI browser user jelas-jelas bukan Indo
+            if (lang.indexOf('id') === -1) {
+                // Browser Asing -> Set ke Inggris
+                document.cookie = "googtrans=/id/en; path=/";
+                document.cookie = "googtrans=/id/en; path=/; domain=" + domain;
+            } else {
+                // Browser Indo -> Set explicit Indo biar stabil
+                document.cookie = "googtrans=/id/id; path=/";
+                document.cookie = "googtrans=/id/id; path=/; domain=" + domain;
+            }
+        }
+    })();
+    `}
+  </Script>
 
   {/* ELEMENT GOOGLE (HIDDEN) */}
   <div id="google_translate_element" style={{ display: 'none' }}></div>

@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-// Pastikan install lucide-react, atau ganti icon pakai text/svg biasa jika error
 import { ChevronDown, Check, Globe } from "lucide-react"; 
 
 export default function NinjaSwitcher() {
@@ -13,18 +12,15 @@ export default function NinjaSwitcher() {
 
   useEffect(() => {
     setMounted(true);
-    // Cek cookie saat ini
     const cookies = document.cookie.split('; ');
     const googtrans = cookies.find(row => row.trim().startsWith('googtrans='));
     
-    // Logic deteksi sederhana
     if (googtrans && googtrans.includes('/en')) {
       setCurrentLang("EN");
     } else {
       setCurrentLang("ID");
     }
 
-    // Listener klik luar untuk tutup dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -35,51 +31,47 @@ export default function NinjaSwitcher() {
   }, []);
 
   const changeLanguage = (lang: string) => {
-    // 1. Tentukan Value Cookie Google Translate
-    // Format: /bahasa_asal/bahasa_tujuan
-    const value = lang === 'en' ? '/id/en' : '/id/id';
-    
     const domain = window.location.hostname;
-    // Potong 'www.' jika ada biar bersih
-    const cleanDomain = domain.replace(/^www\./, ''); 
+    const cleanDomain = domain.replace(/^www\./, ''); // Hapus www.
+    // Ambil bagian domain utama saja (misal: vercel.app) untuk case subdomain deep
+    const parts = cleanDomain.split('.');
+    const topLevelDomain = parts.slice(-2).join('.'); 
 
-    // 2. HAPUS COOKIE LAMA (NUCLEAR METHOD) ☢️
-    // Kita hapus di semua kemungkinan path dan domain biar tidak ada cookie 'zombie'
+    // Tentukan Target Cookie
+    // Kalau ID -> paksa /id/id (biar layout gak auto-detect ke EN lagi)
+    // Kalau EN -> paksa /id/en
+    const cookieValue = lang === 'en' ? '/id/en' : '/id/id';
+
+    // 1. HAPUS COOKIE LAMA (Bersihkan area)
     const expires = "expires=Thu, 01 Jan 1970 00:00:00 UTC";
-    
-    // Hapus: Host Only
     document.cookie = `googtrans=;${expires};path=/`;
-    // Hapus: Domain saat ini
     document.cookie = `googtrans=;${expires};path=/;domain=${domain}`;
-    // Hapus: Dot Domain (untuk subdomain)
     document.cookie = `googtrans=;${expires};path=/;domain=.${domain}`;
-    // Hapus: Clean Domain
     document.cookie = `googtrans=;${expires};path=/;domain=${cleanDomain}`;
     document.cookie = `googtrans=;${expires};path=/;domain=.${cleanDomain}`;
-
-    // 3. SET COOKIE BARU (Double Tap) 🔫
-    // Kita set di dua tempat untuk memastikan Google script membacanya
     
-    // Set A: Host Only (Paling sering berhasil di Vercel)
-    document.cookie = `googtrans=${value};path=/;SameSite=Lax`; 
+    // 2. TULIS COOKIE BARU (Serangan Bertubi-tubi)
+    // Tulis di Host Only
+    document.cookie = `googtrans=${cookieValue};path=/`;
     
-    // Set B: Explicit Domain (Backup jika Host Only gagal)
-    document.cookie = `googtrans=${value};path=/;domain=${domain};SameSite=Lax`;
+    // Tulis di Domain saat ini
+    document.cookie = `googtrans=${cookieValue};path=/;domain=${domain}`;
 
-    // 4. Tutup & Reload
+    // Tulis di Root Domain (khusus Vercel kadang butuh ini)
+    if (domain !== topLevelDomain) {
+        document.cookie = `googtrans=${cookieValue};path=/;domain=.${topLevelDomain}`;
+    }
+
     setIsOpen(false);
     
-    // Timeout sedikit biar cookie sempat tertulis sebelum reload
-    setTimeout(() => {
-        window.location.reload();
-    }, 100);
+    // Reload halaman
+    window.location.reload();
   };
 
   if (!mounted) return null;
 
   return (
     <div className="relative z-50" ref={dropdownRef}>
-      {/* TOMBOL UTAMA */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-full text-xs font-semibold transition border border-slate-700 shadow-lg"
@@ -89,7 +81,6 @@ export default function NinjaSwitcher() {
         <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
-      {/* DROPDOWN MENU */}
       <div 
         className={`absolute top-full right-0 mt-2 w-32 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden transition-all duration-200 origin-top-right ${
           isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
