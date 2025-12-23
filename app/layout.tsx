@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://dompetpintar.a76labs.online"),
   title: { default: "Dompet Pintar", template: "%s | Dompet Pintar" },
-  description: "Aplikasi manajemen keuangan pribadi.",
+  description: "Aplikasi manajemen keuangan pribadi.",  
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
