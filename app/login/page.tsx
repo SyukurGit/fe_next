@@ -7,11 +7,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 interface LoginResponse {
-  token: string;
-  user: {
+  token?: string;
+  role?: string;
+  username?: string;
+  status?: string;
+  user?: {
     username: string;
-    status: string;
-    // tambahkan field lain jika perlu
+    role?: string;
+    status?: string;
   };
   error?: string;
 }
@@ -49,21 +52,27 @@ export default function LoginPage() {
 
       const data: LoginResponse = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.token) {
+        const user = {
+          username: data.user?.username || data.username || form.username,
+          role: data.user?.role || data.role,
+          status: data.user?.status || data.status,
+        };
+
         localStorage.setItem('jwt_token', data.token);
-        localStorage.setItem('username', data.user.username);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('username', user.username);
+        localStorage.setItem('user', JSON.stringify(user));
 
         // Logic redirect pintar
-        if (data.user.status === 'suspended') {
-          router.push('dashboard/suspended');
+        if (user.status === 'suspended') {
+          router.push('/dashboard/suspended');
         } else {
           router.push('/dashboard');
         }
       } else {
         setError(data.error || 'Login gagal, periksa username/password.');
       }
-    } catch (err) {
+    } catch {
       setError("Gagal terhubung ke server.");
     } finally {
       setIsLoading(false);

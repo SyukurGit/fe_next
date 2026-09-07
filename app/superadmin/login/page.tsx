@@ -5,6 +5,19 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
+interface LoginResponse {
+  token?: string;
+  role?: string;
+  username?: string;
+  status?: string;
+  user?: {
+    username?: string;
+    role?: string;
+    status?: string;
+  };
+  error?: string;
+}
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ username: '', password: '' });
@@ -26,11 +39,17 @@ export default function AdminLoginPage() {
         body: JSON.stringify(form)
       });
 
-      const data = await res.json();
+      const data: LoginResponse = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.token) {
+        const user = {
+          username: data.user?.username || data.username || form.username,
+          role: data.user?.role || data.role,
+          status: data.user?.status || data.status,
+        };
+
         // Cek Role Admin
-        if (data.user.role !== 'admin') {
+        if (user.role !== 'admin') {
             setError("Anda bukan SuperAdmin! Akses ditolak.");
             setIsLoading(false);
             return;
@@ -38,14 +57,15 @@ export default function AdminLoginPage() {
 
         // Simpan token
         localStorage.setItem('jwt_token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('username', user.username);
+        localStorage.setItem('user', JSON.stringify(user));
         
         // Redirect ke Panel Admin
         router.push('/superadmin/dashboard');
       } else {
         setError(data.error || 'Login gagal');
       }
-    } catch (err) {
+    } catch {
       setError("Gagal koneksi ke server");
     } finally {
       setIsLoading(false);
